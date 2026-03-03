@@ -72,3 +72,7 @@ data/subghz/captures/
 
 # Local backup folders created by Unchained scripts
 .bak_unchained_*/
+
+# Local stray files (do not commit)
+ssh key
+ssh key.pub
