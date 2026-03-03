@@ -15,8 +15,8 @@
     --bg-elevated: #1b2734;
 
     /* Accent colors - slate/cyan */
-    --accent-cyan: #4aa3ff;
-    --accent-cyan-dim: rgba(74, 163, 255, 0.16);
+    \1#ff3b30;
+    \1#ff6a63;
     --accent-green: #38c180;
     --accent-green-dim: rgba(56, 193, 128, 0.18);
     --accent-red: #e25d5d;
@@ -54,8 +54,8 @@
     --bg-tertiary: #dde5f0;
     --bg-card: #ffffff;
     --bg-elevated: #f1f4f9;
-    --accent-cyan: #1f5fa8;
-    --accent-cyan-dim: rgba(31, 95, 168, 0.12);
+    \1#ff3b30;
+    \1#ff6a63;
     --accent-green: #1f8a57;
     --accent-red: #c74444;
     --accent-orange: #b5863a;

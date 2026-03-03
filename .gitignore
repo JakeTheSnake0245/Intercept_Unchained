@@ -65,3 +65,10 @@ data/subghz/captures/
 .env
 .env.*
 !.env.example
+
+# Python bytecode
+**/__pycache__/
+*.pyc
+
+# Local backup folders created by Unchained scripts
+.bak_unchained_*/

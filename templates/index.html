@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iNTERCEPT // See the Invisible</title>
+    <title>Intercept_Unchained // Unchained</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#0b1118">
@@ -70,20 +70,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modes/waterfall.css') }}?v={{ version }}&r=wfdeck19">
     <script>
         window.INTERCEPT_MODE_STYLE_MAP = {
-            aprs: "{{ url_for('static', filename='css/modes/aprs.css') }}",
             tscm: "{{ url_for('static', filename='css/modes/tscm.css') }}",
-            spystations: "{{ url_for('static', filename='css/modes/spy-stations.css') }}",
             meshtastic: "{{ url_for('static', filename='css/modes/meshtastic.css') }}",
-            sstv: "{{ url_for('static', filename='css/modes/sstv.css') }}",
-            weathersat: "{{ url_for('static', filename='css/modes/weather-satellite.css') }}",
-            sstv_general: "{{ url_for('static', filename='css/modes/sstv-general.css') }}",
-            gps: "{{ url_for('static', filename='css/modes/gps.css') }}",
             subghz: "{{ url_for('static', filename='css/modes/subghz.css') }}?v={{ version }}&r=subghz_layout9",
             bt_locate: "{{ url_for('static', filename='css/modes/bt_locate.css') }}?v={{ version }}&r=btlocate4",
-            spaceweather: "{{ url_for('static', filename='css/modes/space-weather.css') }}",
-            wefax: "{{ url_for('static', filename='css/modes/wefax.css') }}",
             morse: "{{ url_for('static', filename='css/modes/morse.css') }}",
-            radiosonde: "{{ url_for('static', filename='css/modes/radiosonde.css') }}",
             system: "{{ url_for('static', filename='css/modes/system.css') }}"
         };
         window.INTERCEPT_MODE_STYLE_LOADED = {};
@@ -228,7 +219,7 @@
                 </div>
                 <div class="welcome-title-block">
                     <h1 class="welcome-title">iNTERCEPT</h1>
-                    <p class="welcome-tagline">// See the Invisible</p>
+                    <p class="welcome-tagline">// Unchained</p>
                     <span class="welcome-version">v{{ version }}</span>
                 </div>
             </div>
@@ -237,7 +228,7 @@
             <div class="welcome-content">
                 <!-- Left: Changelog -->
                 <div class="welcome-changelog">
-                    <h2>What's New</h2>
+                    <!-- What's New (removed in Intercept_Unchained) -->
                     {% for release in changelog[:2] %}
                     <div class="changelog-release">
                         <div class="changelog-version-header">
@@ -288,87 +279,6 @@
                         </div>
                     </div>
 
-                    <!-- Tracking -->
-                    <div class="mode-category">
-                        <h3 class="mode-category-title"><span class="mode-category-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span> Tracking</h3>
-                        <div class="mode-grid mode-grid-compact">
-                            <a href="/adsb/dashboard" class="mode-card mode-card-sm" style="text-decoration: none;">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></span>
-                                <span class="mode-name">Aircraft</span>
-                            </a>
-                            <a href="/ais/dashboard" class="mode-card mode-card-sm" style="text-decoration: none;">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l2 2h14l2-2"/><path d="M5 18v-4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M12 12V6"/></svg></span>
-                                <span class="mode-name">Vessels</span>
-                            </a>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('aprs')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                                <span class="mode-name">APRS</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('gps')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg></span>
-                                <span class="mode-name">GPS</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('radiosonde')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><circle cx="12" cy="12" r="4"/><path d="M12 16v6"/><path d="M4.93 4.93l4.24 4.24"/><path d="M14.83 14.83l4.24 4.24"/></svg></span>
-                                <span class="mode-name">Radiosonde</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Space -->
-                    <div class="mode-category">
-                        <h3 class="mode-category-title"><span class="mode-category-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span> Space</h3>
-                        <div class="mode-grid mode-grid-compact">
-                            <button class="mode-card mode-card-sm" onclick="selectMode('satellite')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 7L9 3 5 7l4 4"/><path d="m17 11 4 4-4 4-4-4"/><path d="m8 12 4 4 6-6-4-4-6 6"/><path d="m16 8 3-3"/><path d="M9 21a6 6 0 0 0-6-6"/></svg></span>
-                                <span class="mode-name">Satellite</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('sstv')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M3 9h2"/><path d="M19 9h2"/><path d="M3 15h2"/><path d="M19 15h2"/></svg></span>
-                                <span class="mode-name">ISS SSTV</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('weathersat')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-                                <span class="mode-name">Weather Sat</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('sstv_general')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg></span>
-                                <span class="mode-name">HF SSTV</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('wefax')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
-                                <span class="mode-name">WeFax</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('spaceweather')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
-                                <span class="mode-name">Space Wx</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Wireless -->
-                    <div class="mode-category">
-                        <h3 class="mode-category-title"><span class="mode-category-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg></span> Wireless</h3>
-                        <div class="mode-grid mode-grid-compact">
-                            <button class="mode-card mode-card-sm" onclick="selectMode('wifi')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg></span>
-                                <span class="mode-name">WiFi</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('bluetooth')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6.5 6.5 17.5 17.5 12 22 12 2 17.5 6.5 6.5 17.5"/></svg></span>
-                                <span class="mode-name">Bluetooth</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('bt_locate')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/><path d="M9.5 8.5l3 3 2-4-2 4-3 3"/></svg></span>
-                                <span class="mode-name">BT Locate</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('meshtastic')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></span>
-                                <span class="mode-name">Meshtastic</span>
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Intel -->
                     <div class="mode-category">
                         <h3 class="mode-category-title"><span class="mode-category-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span> Intel</h3>
@@ -393,7 +303,7 @@
 
             <!-- Footer -->
             <div class="welcome-footer">
-                <p>Signal Intelligence & Counter Surveillance Platform</p>
+                <p>Targeted Signal Intelligence & Counter Surveillance Platform</p>
             </div>
         </div>
         <div class="welcome-scanline"></div>
@@ -508,9 +418,9 @@
                 <rect x="38" y="76" width="24" height="4" rx="1" fill="#00d4ff" />
             </svg>
         </a>
-        <h1>iNTERCEPT <span class="tagline">// See the Invisible</span> <span class="version-badge">v{{ version
+        <h1>iNTERCEPT <span class="tagline">// Unchained</span> <span class="version-badge">v{{ version
                 }}</span></h1>
-        <p class="subtitle">Signal Intelligence & Counter Surveillance Platform <span class="active-mode-indicator"
+        <p class="subtitle">Targeted Signal Intelligence & Counter Surveillance Platform <span class="active-mode-indicator"
                 id="activeModeIndicator"><span class="pulse-dot"></span>PAGER</span></p>
 
     </header>
@@ -3398,22 +3308,11 @@
             sensor: { label: '433MHz', indicator: '433MHZ', outputTitle: '433MHz Sensor Monitor', group: 'signals' },
             rtlamr: { label: 'Meters', indicator: 'METERS', outputTitle: 'Utility Meter Monitor', group: 'signals' },
             subghz: { label: 'SubGHz', indicator: 'SUBGHZ', outputTitle: 'SubGHz Transceiver', group: 'signals' },
-            aprs: { label: 'APRS', indicator: 'APRS', outputTitle: 'APRS Tracker', group: 'tracking' },
-            gps: { label: 'GPS', indicator: 'GPS', outputTitle: 'GPS Receiver', group: 'tracking' },
-            radiosonde: { label: 'Radiosonde', indicator: 'SONDE', outputTitle: 'Radiosonde Decoder', group: 'tracking' },
-            satellite: { label: 'Satellite', indicator: 'SATELLITE', outputTitle: 'Satellite Monitor', group: 'space' },
-            sstv: { label: 'ISS SSTV', indicator: 'ISS SSTV', outputTitle: 'ISS SSTV Decoder', group: 'space' },
-            weathersat: { label: 'Weather Sat', indicator: 'WEATHER SAT', outputTitle: 'Weather Satellite Decoder', group: 'space' },
-            sstv_general: { label: 'HF SSTV', indicator: 'HF SSTV', outputTitle: 'HF SSTV Decoder', group: 'space' },
-            wefax: { label: 'WeFax', indicator: 'WEFAX', outputTitle: 'Weather Fax Decoder', group: 'space' },
-            spaceweather: { label: 'Space Weather', indicator: 'SPACE WX', outputTitle: 'Space Weather Monitor', group: 'space' },
             wifi: { label: 'WiFi', indicator: 'WIFI', outputTitle: 'WiFi Scanner', group: 'wireless' },
             bluetooth: { label: 'Bluetooth', indicator: 'BLUETOOTH', outputTitle: 'Bluetooth Scanner', group: 'wireless' },
             bt_locate: { label: 'BT Locate', indicator: 'BT LOCATE', outputTitle: 'BT Locate — SAR Tracker', group: 'wireless' },
             meshtastic: { label: 'Meshtastic', indicator: 'MESHTASTIC', outputTitle: 'Meshtastic Mesh Monitor', group: 'wireless' },
             tscm: { label: 'TSCM', indicator: 'TSCM', outputTitle: 'TSCM Counter-Surveillance', group: 'intel' },
-            spystations: { label: 'Spy Stations', indicator: 'SPY STATIONS', outputTitle: 'Spy Stations', group: 'intel' },
-            websdr: { label: 'WebSDR', indicator: 'WEBSDR', outputTitle: 'HF/Shortwave WebSDR', group: 'intel' },
             waterfall: { label: 'Waterfall', indicator: 'WATERFALL', outputTitle: 'Spectrum Waterfall', group: 'signals' },
             morse: { label: 'Morse', indicator: 'MORSE', outputTitle: 'CW/Morse Decoder', group: 'signals' },
             system: { label: 'System', indicator: 'SYSTEM', outputTitle: 'System Health Monitor', group: 'system' },
@@ -3956,7 +3855,6 @@
                 bluetooth: Boolean(
                     ((typeof BluetoothMode !== 'undefined' && typeof BluetoothMode.isScanning === 'function' && BluetoothMode.isScanning()) || isBtRunning)
                 ),
-                aprs: Boolean(typeof isAprsRunning !== 'undefined' && isAprsRunning),
                 tscm: Boolean(typeof isTscmRunning !== 'undefined' && isTscmRunning),
             };
         }
@@ -4079,6 +3977,11 @@
 
         // Mode switching
         async function switchMode(mode, options = {}) {
+            // Intercept_Unchained guard: unknown mode
+            if (typeof modeCatalog !== 'undefined' && mode && !modeCatalog[mode]) {
+                console.warn('[Unchained] Unknown/disabled mode:', mode);
+                mode = 'pager';
+            }
             const { updateUrl = true } = options;
             const switchStartMs = performance.now();
             const previousMode = currentMode;
@@ -4144,20 +4047,12 @@
             const moduleDestroyMap = {
                 subghz: () => typeof SubGhz !== 'undefined' && SubGhz.destroy(),
                 morse: () => typeof MorseMode !== 'undefined' && MorseMode.destroy?.(),
-                spaceweather: () => typeof SpaceWeather !== 'undefined' && SpaceWeather.destroy?.(),
-                weathersat: () => typeof WeatherSat !== 'undefined' && WeatherSat.suspend?.(),
-                wefax: () => typeof WeFax !== 'undefined' && WeFax.destroy?.(),
                 system: () => typeof SystemHealth !== 'undefined' && SystemHealth.destroy?.(),
                 waterfall: () => typeof Waterfall !== 'undefined' && Waterfall.destroy?.(),
-                gps: () => typeof GPS !== 'undefined' && GPS.destroy?.(),
                 meshtastic: () => typeof Meshtastic !== 'undefined' && Meshtastic.destroy?.(),
                 bluetooth: () => typeof BluetoothMode !== 'undefined' && BluetoothMode.destroy?.(),
                 wifi: () => typeof WiFiMode !== 'undefined' && WiFiMode.destroy?.(),
                 bt_locate: () => typeof BtLocate !== 'undefined' && BtLocate.destroy?.(),
-                sstv: () => typeof SSTV !== 'undefined' && SSTV.destroy?.(),
-                sstv_general: () => typeof SSTVGeneral !== 'undefined' && SSTVGeneral.destroy?.(),
-                websdr: () => typeof WebSDR !== 'undefined' && WebSDR.destroy?.(),
-                spystations: () => typeof SpyStations !== 'undefined' && SpyStations.destroy?.(),
             };
             if (previousMode && previousMode !== mode && moduleDestroyMap[previousMode]) {
                 try { moduleDestroyMap[previousMode](); } catch(e) { console.warn(`[switchMode] destroy ${previousMode} failed:`, e); }
@@ -4429,7 +4324,6 @@
             } else if (mode === 'gps') {
                 GPS.init();
             } else if (mode === 'websdr') {
-                if (typeof initWebSDR === 'function') initWebSDR();
             } else if (mode === 'subghz') {
                 SubGhz.init();
             } else if (mode === 'bt_locate') {
@@ -4443,7 +4337,6 @@
             } else if (mode === 'wefax') {
                 WeFax.init();
             } else if (mode === 'spaceweather') {
-                SpaceWeather.init();
             } else if (mode === 'waterfall') {
                 if (typeof Waterfall !== 'undefined') Waterfall.init();
             } else if (mode === 'morse') {
