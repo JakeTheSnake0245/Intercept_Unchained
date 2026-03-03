@@ -58,11 +58,11 @@
         <button type="button" class="mode-nav-dropdown-btn"{% if is_index_page %} onclick="toggleNavDropdown('signals')"{% endif %}>
             <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 3 16 3-8h4"/><path d="M22 12h-1"/><path d="M1 12h1"/></svg></span>
             <span class="nav-label">Signals</span>
-            {{ mode_item('meshtastic', 'Meshtastic', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>') }}
             <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </button>
 
         <div class="mode-nav-dropdown-menu">
+            {{ mode_item('meshtastic_sdr', 'Mesh SDR', '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7h6l2 3h10v7H3z\"/><path d=\"M7 16h.01\"/><path d=\"M11 16h.01\"/><path d=\"M15 16h.01\"/></svg>') }}
             {{ mode_item('pager', 'Pager', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>') }}
             {{ mode_item('sensor', '433MHz', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg>') }}
             {{ mode_item('rtlamr', 'Meters', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>') }}
@@ -71,6 +71,22 @@
             {{ mode_item('morse', 'Morse', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="5" y2="12"/><line x1="7" y1="12" x2="13" y2="12"/><line x1="15" y1="12" x2="18" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>') }}
         </div>
     </div>
+
+    {# Wireless Group #}
+    <div class="mode-nav-dropdown" data-group="wireless">
+        <button type="button" class="mode-nav-dropdown-btn"{% if is_index_page %} onclick="toggleNavDropdown('wireless')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 16 0"/><path d="M7 12a5 5 0 0 1 10 0"/><path d="M10 12a2 2 0 0 1 4 0"/><circle cx="12" cy="19" r="1"/></svg></span>
+            <span class="nav-label">Wireless</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('wifi', 'WiFi', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.5 16a6 6 0 0 1 7 0"/><path d="M12 20h.01"/></svg>') }}
+            {{ mode_item('bluetooth', 'Bluetooth', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 17l12-12-6-5v24l6-5-12-12"/></svg>') }}
+            {{ mode_item('meshtastic', 'Meshtastic', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>') }}
+        </div>
+    </div>
+
 
     {# Intel Group #}
     <div class="mode-nav-dropdown" data-group="intel">

@@ -1,0 +1,13 @@
+<div id="meshtasticSdrDashboard" class="dashboard-panel" style="display:none;">
+  <div class="panel-header">
+    <h3>Meshtastic SDR Decoder</h3>
+    <p class="panel-subtitle">Decode Meshtastic traffic captured with RTL-SDR / HackRF (scaffold)</p>
+  </div>
+
+  <div class="control-row">
+    <button class="control-btn" onclick="MeshtasticSDR.checkStatus()">Status</button>
+    <button class="control-btn" onclick="MeshtasticSDR.decodeFile()">Decode File</button>
+  </div>
+
+  <pre id="meshtasticSdrOutput" class="output-box">Ready.</pre>
+</div>

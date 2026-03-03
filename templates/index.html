@@ -199,22 +199,22 @@
             <div class="welcome-header">
                 <div class="welcome-logo">
                     <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 30 Q5 50, 15 70" stroke="#00d4ff" stroke-width="3" fill="none"
+                        <path d="M15 30 Q5 50, 15 70" stroke="#ff3b30" stroke-width="3" fill="none"
                             stroke-linecap="round" opacity="0.5" class="signal-wave signal-wave-1" />
-                        <path d="M22 35 Q14 50, 22 65" stroke="#00d4ff" stroke-width="2.5" fill="none"
+                        <path d="M22 35 Q14 50, 22 65" stroke="#ff3b30" stroke-width="2.5" fill="none"
                             stroke-linecap="round" opacity="0.7" class="signal-wave signal-wave-2" />
-                        <path d="M29 40 Q23 50, 29 60" stroke="#00d4ff" stroke-width="2" fill="none"
+                        <path d="M29 40 Q23 50, 29 60" stroke="#ff3b30" stroke-width="2" fill="none"
                             stroke-linecap="round" class="signal-wave signal-wave-3" />
-                        <path d="M85 30 Q95 50, 85 70" stroke="#00d4ff" stroke-width="3" fill="none"
+                        <path d="M85 30 Q95 50, 85 70" stroke="#ff3b30" stroke-width="3" fill="none"
                             stroke-linecap="round" opacity="0.5" class="signal-wave signal-wave-1" />
-                        <path d="M78 35 Q86 50, 78 65" stroke="#00d4ff" stroke-width="2.5" fill="none"
+                        <path d="M78 35 Q86 50, 78 65" stroke="#ff3b30" stroke-width="2.5" fill="none"
                             stroke-linecap="round" opacity="0.7" class="signal-wave signal-wave-2" />
-                        <path d="M71 40 Q77 50, 71 60" stroke="#00d4ff" stroke-width="2" fill="none"
+                        <path d="M71 40 Q77 50, 71 60" stroke="#ff3b30" stroke-width="2" fill="none"
                             stroke-linecap="round" class="signal-wave signal-wave-3" />
                         <circle cx="50" cy="22" r="6" fill="#00ff88" class="logo-dot" />
-                        <rect x="44" y="35" width="12" height="45" rx="2" fill="#00d4ff" />
-                        <rect x="38" y="35" width="24" height="4" rx="1" fill="#00d4ff" />
-                        <rect x="38" y="76" width="24" height="4" rx="1" fill="#00d4ff" />
+                        <rect x="44" y="35" width="12" height="45" rx="2" fill="#ff3b30" />
+                        <rect x="38" y="35" width="24" height="4" rx="1" fill="#ff3b30" />
+                        <rect x="38" y="76" width="24" height="4" rx="1" fill="#ff3b30" />
                     </svg>
                 </div>
                 <div class="welcome-title-block">
@@ -226,25 +226,8 @@
 
             <!-- Main Content Grid -->
             <div class="welcome-content">
-                <!-- Left: Changelog -->
-                <div class="welcome-changelog">
-                    <!-- What's New (removed in Intercept_Unchained) -->
-                    {% for release in changelog[:2] %}
-                    <div class="changelog-release">
-                        <div class="changelog-version-header">
-                            <span class="changelog-version">v{{ release.version }}</span>
-                            <span class="changelog-date">{{ release.date }}</span>
-                        </div>
-                        <ul class="changelog-list">
-                            {% for item in release.highlights %}
-                            <li>{{ item }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Right: Mode Selection -->
+<!-- Left panel removed (Intercept_Unchained) -->
+<!-- Right: Mode Selection -->
                 <div class="welcome-modes">
                     <h2>Select Mode</h2>
 
@@ -272,14 +255,65 @@
                                 <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 3 16 3-8h4"/><path d="M2 18h20" opacity="0.5"/><path d="M2 21h20" opacity="0.3"/></svg></span>
                                 <span class="mode-name">Waterfall</span>
                             </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('morse')">
+                            
+                            <button class="mode-card mode-card-sm" onclick="selectMode('meshtastic_sdr')">
+                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h6l2 3h10v7H3z"/><path d="M7 16h.01"/><path d="M11 16h.01"/><path d="M15 16h.01"/></svg></span>
+                                <span class="mode-name">Mesh SDR</span>
+                            </button>
+<button class="mode-card mode-card-sm" onclick="selectMode('morse')">
                                 <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="5" y2="12"/><line x1="7" y1="12" x2="13" y2="12"/><line x1="15" y1="12" x2="18" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg></span>
                                 <span class="mode-name">Morse</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Intel -->
+                    
+                      <!-- Wireless -->
+                      <div class="mode-category">
+                          <h3 class="mode-category-title">
+                              <span class="mode-category-icon icon">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      <path d="M5 13a10 10 0 0 1 14 0"/>
+                                      <path d="M8.5 16.5a5 5 0 0 1 7 0"/>
+                                      <path d="M12 20h.01"/>
+                                  </svg>
+                              </span> Wireless
+                          </h3>
+                          <div class="mode-grid mode-grid-compact">
+                              <button class="mode-card mode-card-sm" onclick="selectMode('wifi')">
+                                  <span class="mode-icon icon">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <path d="M5 13a10 10 0 0 1 14 0"/>
+                                          <path d="M8.5 16.5a5 5 0 0 1 7 0"/>
+                                          <path d="M12 20h.01"/>
+                                      </svg>
+                                  </span>
+                                  <span class="mode-name">WiFi</span>
+                              </button>
+
+                              <button class="mode-card mode-card-sm" onclick="selectMode('bluetooth')">
+                                  <span class="mode-icon icon">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <path d="M6 7l12 10-6 5V2l6 5L6 17"/>
+                                      </svg>
+                                  </span>
+                                  <span class="mode-name">Bluetooth</span>
+                              </button>
+
+                              <button class="mode-card mode-card-sm" onclick="selectMode('meshtastic')">
+                                  <span class="mode-icon icon">
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                          <circle cx="12" cy="12" r="10"/>
+                                          <circle cx="12" cy="12" r="3"/>
+                                          <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                                      </svg>
+                                  </span>
+                                  <span class="mode-name">Meshtastic</span>
+                              </button>
+                          </div>
+                      </div>
+
+<!-- Intel -->
                     <div class="mode-category">
                         <h3 class="mode-category-title"><span class="mode-category-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span> Intel</h3>
                         <div class="mode-grid mode-grid-compact">
@@ -287,15 +321,7 @@
                                 <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
                                 <span class="mode-name">TSCM</span>
                             </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('spystations')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg></span>
-                                <span class="mode-name">Spy Stations</span>
-                            </button>
-                            <button class="mode-card mode-card-sm" onclick="selectMode('websdr')">
-                                <span class="mode-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-                                <span class="mode-name">WebSDR</span>
-                            </button>
-                        </div>
+</div>
                     </div>
 
                 </div>
@@ -396,26 +422,26 @@
         <a href="https://smittix.github.io/intercept" target="_blank" rel="noopener noreferrer" class="logo">
             <svg width="50" height="50" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <!-- Signal brackets - left side -->
-                <path d="M15 30 Q5 50, 15 70" stroke="#00d4ff" stroke-width="3" fill="none" stroke-linecap="round"
+                <path d="M15 30 Q5 50, 15 70" stroke="#ff3b30" stroke-width="3" fill="none" stroke-linecap="round"
                     opacity="0.5" />
-                <path d="M22 35 Q14 50, 22 65" stroke="#00d4ff" stroke-width="2.5" fill="none" stroke-linecap="round"
+                <path d="M22 35 Q14 50, 22 65" stroke="#ff3b30" stroke-width="2.5" fill="none" stroke-linecap="round"
                     opacity="0.7" />
-                <path d="M29 40 Q23 50, 29 60" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M29 40 Q23 50, 29 60" stroke="#ff3b30" stroke-width="2" fill="none" stroke-linecap="round" />
                 <!-- Signal brackets - right side -->
-                <path d="M85 30 Q95 50, 85 70" stroke="#00d4ff" stroke-width="3" fill="none" stroke-linecap="round"
+                <path d="M85 30 Q95 50, 85 70" stroke="#ff3b30" stroke-width="3" fill="none" stroke-linecap="round"
                     opacity="0.5" />
-                <path d="M78 35 Q86 50, 78 65" stroke="#00d4ff" stroke-width="2.5" fill="none" stroke-linecap="round"
+                <path d="M78 35 Q86 50, 78 65" stroke="#ff3b30" stroke-width="2.5" fill="none" stroke-linecap="round"
                     opacity="0.7" />
-                <path d="M71 40 Q77 50, 71 60" stroke="#00d4ff" stroke-width="2" fill="none" stroke-linecap="round" />
+                <path d="M71 40 Q77 50, 71 60" stroke="#ff3b30" stroke-width="2" fill="none" stroke-linecap="round" />
                 <!-- The 'i' letter -->
                 <!-- dot of i -->
                 <circle cx="50" cy="22" r="6" fill="#00ff88" />
                 <!-- stem of i with styled terminals -->
-                <rect x="44" y="35" width="12" height="45" rx="2" fill="#00d4ff" />
+                <rect x="44" y="35" width="12" height="45" rx="2" fill="#ff3b30" />
                 <!-- top terminal bar -->
-                <rect x="38" y="35" width="24" height="4" rx="1" fill="#00d4ff" />
+                <rect x="38" y="35" width="24" height="4" rx="1" fill="#ff3b30" />
                 <!-- bottom terminal bar -->
-                <rect x="38" y="76" width="24" height="4" rx="1" fill="#00d4ff" />
+                <rect x="38" y="76" width="24" height="4" rx="1" fill="#ff3b30" />
             </svg>
         </a>
         <h1>iNTERCEPT <span class="tagline">// Unchained</span> <span class="version-badge">v{{ version
@@ -617,6 +643,7 @@
 
                 {% include 'partials/modes/meshtastic.html' %}
 
+                {% include 'partials/modes/meshtastic_sdr.html' %}
                 {% include 'partials/modes/websdr.html' %}
 
                 {% include 'partials/modes/subghz.html' %}
