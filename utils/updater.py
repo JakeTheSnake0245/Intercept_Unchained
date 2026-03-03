@@ -4,6 +4,15 @@ GitHub update checking and git-based update mechanism.
 
 from __future__ import annotations
 
+
+def _github_headers():
+    """Headers for GitHub API calls. Adds Authorization when GITHUB_TOKEN is set."""
+    headers = {'Accept': 'application/vnd.github+json'}
+    token = getattr(config, 'GITHUB_TOKEN', '')
+    if token:
+        headers['Authorization'] = f"Bearer {token}"
+    return headers
+
 import json
 import logging
 import os

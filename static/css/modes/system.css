@@ -16,7 +16,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     border-bottom: 1px solid rgba(0, 212, 255, 0.2);
     padding-bottom: 6px;
     margin-top: 8px;
@@ -219,7 +219,7 @@
 
 .sys-sparkline-line {
     fill: none;
-    stroke: var(--accent-cyan, #00d4ff);
+    stroke: var(--accent-cyan, #ff3b30);
     stroke-width: 1.5;
     filter: drop-shadow(0 0 2px rgba(0, 212, 255, 0.4));
 }
@@ -249,7 +249,7 @@
 
 .sys-net-iface-name {
     font-weight: 700;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-size: 11px;
 }
 
@@ -278,7 +278,7 @@
 }
 
 .sys-bw-down {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 /* Globe container — compact vertical layout */
@@ -389,7 +389,7 @@
 }
 
 .sys-disk-io-read {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .sys-disk-io-write {
@@ -452,7 +452,7 @@
     padding: 2px 8px;
     background: transparent;
     border: 1px solid var(--border-color, #2a2a4a);
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     border-radius: 3px;
     cursor: pointer;
     text-transform: uppercase;

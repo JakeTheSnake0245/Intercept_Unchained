@@ -1523,7 +1523,7 @@
     font-family: var(--font-mono);
     font-size: 14px;
     font-weight: 600;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .station-raw-modal-close {
@@ -1593,7 +1593,7 @@
 }
 
 .station-raw-copy-btn:hover {
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, #ff3b30);
     color: #000;
 }
 
@@ -1644,7 +1644,7 @@
 }
 
 .signal-card.signal-card-clickable:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
     box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.2);
 }
 
@@ -1754,7 +1754,7 @@
     font-family: var(--font-mono);
     font-size: 15px;
     font-weight: 600;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .signal-details-modal-close {
@@ -1800,7 +1800,7 @@
 }
 
 .signal-details-copy-btn:hover {
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, #ff3b30);
     color: #000;
 }
 

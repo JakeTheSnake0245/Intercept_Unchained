@@ -66,9 +66,9 @@
     --text-muted: #aab6c8;
     --border-color: #d1d9e6;
     --border-light: #c1ccdb;
-    --border-glow: rgba(31, 95, 168, 0.12);
+    --border-glow: rgba(255, 59, 48, 0.12);
 
-    --grid-line: rgba(31, 95, 168, 0.14);
+    --grid-line: rgba(255, 59, 48, 0.14);
     --grid-dot: rgba(12, 18, 24, 0.06);
     --noise-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='40'%20height='40'%20viewBox='0%200%2040%2040'%3E%3Cg%20fill='%23000000'%20fill-opacity='0.05'%3E%3Ccircle%20cx='3'%20cy='5'%20r='1'/%3E%3Ccircle%20cx='11'%20cy='9'%20r='1'/%3E%3Ccircle%20cx='18'%20cy='3'%20r='1'/%3E%3Ccircle%20cx='26'%20cy='12'%20r='1'/%3E%3Ccircle%20cx='34'%20cy='6'%20r='1'/%3E%3Ccircle%20cx='7'%20cy='19'%20r='1'/%3E%3Ccircle%20cx='15'%20cy='24'%20r='1'/%3E%3Ccircle%20cx='28'%20cy='22'%20r='1'/%3E%3Ccircle%20cx='36'%20cy='18'%20r='1'/%3E%3Ccircle%20cx='5'%20cy='33'%20r='1'/%3E%3Ccircle%20cx='19'%20cy='32'%20r='1'/%3E%3Ccircle%20cx='31'%20cy='34'%20r='1'/%3E%3C/g%3E%3C/svg%3E");
 }
@@ -226,7 +226,7 @@ body {
 }
 
 .welcome-settings-btn:hover {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     background: rgba(255, 255, 255, 0.05);
 }
 
@@ -1104,7 +1104,7 @@ header p.subtitle {
 
 header h1 .tagline {
     font-weight: 400;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-size: 0.6em;
     opacity: 0.9;
     display: none;
@@ -2356,7 +2356,7 @@ header h1 .tagline {
     width: 150px;
     height: 12px;
     background: linear-gradient(to right,
-        #000080, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000, #ffffff);
+        #000080, #0000ff, #ff3b30, #00ff00, #ffff00, #ff0000, #ffffff);
     border-radius: 2px;
 }
 
@@ -2981,7 +2981,7 @@ header h1 .tagline {
 
 .pass-card.active {
     border-color: var(--accent-cyan);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.2);
 }
 
 .pass-satellite {
@@ -3021,7 +3021,7 @@ header h1 .tagline {
 }
 
 .pass-quality.good {
-    background: rgba(0, 255, 255, 0.2);
+    background: rgba(255, 59, 48, 0.2);
     color: var(--accent-cyan);
 }
 
@@ -3686,11 +3686,11 @@ header h1 .tagline {
 }
 
 .wifi-network-row:hover {
-    background: rgba(0, 255, 255, 0.05);
+    background: rgba(255, 59, 48, 0.05);
 }
 
 .wifi-network-row.selected {
-    background: rgba(0, 255, 255, 0.1);
+    background: rgba(255, 59, 48, 0.1);
     border-left: 2px solid var(--accent-cyan);
 }
 
@@ -3735,7 +3735,7 @@ header h1 .tagline {
 }
 
 .wifi-network-row .security-badge.security-wpa3 { background: rgba(0, 255, 0, 0.15); color: var(--accent-green); }
-.wifi-network-row .security-badge.security-wpa { background: rgba(0, 255, 255, 0.15); color: var(--accent-cyan); }
+.wifi-network-row .security-badge.security-wpa { background: rgba(255, 59, 48, 0.15); color: var(--accent-cyan); }
 .wifi-network-row .security-badge.security-wep { background: rgba(255, 165, 0, 0.15); color: var(--accent-orange); }
 .wifi-network-row .security-badge.security-open { background: rgba(255, 0, 0, 0.15); color: var(--accent-red); }
 
@@ -4354,7 +4354,7 @@ header h1 .tagline {
 .bt-detail-address {
     font-family: var(--font-mono);
     font-size: 10px;
-    color: #00d4ff;
+    color: #ff3b30;
 }
 
 .bt-detail-rssi-display {
@@ -5395,7 +5395,7 @@ header h1 .tagline {
 }
 
 .bt-modal-btn-primary {
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, #ff3b30);
     border: none;
     color: #000;
     font-weight: 600;
@@ -7232,7 +7232,7 @@ body[data-mode="tscm"] {
 }
 
 [data-theme="light"] body {
-    --mode-ambient-left: rgba(31, 95, 168, 0.09);
+    --mode-ambient-left: rgba(255, 59, 48, 0.09);
     --mode-ambient-right: rgba(31, 138, 87, 0.05);
     --mode-ambient-bottom: rgba(181, 134, 58, 0.04);
 }
@@ -7417,7 +7417,7 @@ body[data-mode="tscm"] {
 [data-theme="light"] .preset-btn,
 [data-theme="light"] .control-btn,
 [data-theme="light"] .clear-btn {
-    border-color: rgba(31, 95, 168, 0.26);
+    border-color: rgba(255, 59, 48, 0.26);
 }
 
 [data-animations="off"] .mode-content.active {
@@ -7430,3 +7430,70 @@ body[data-mode="tscm"] {
         margin-right: 8px;
     }
 }
+
+/* Intercept_Unchained RED THEME OVERRIDE */
+/* Goal: red-tint the entire UI (background/panels/glows), not just icons. */
+:root{
+  --accent-cyan: #ff3b30 !important;
+  --accent-cyan-dim: #ff6a63 !important;
+  --accent-cyan-glow: rgba(255,59,48,0.50) !important;
+
+  --accent: #ff3b30 !important;
+  --accent-primary: #ff3b30 !important;
+  --primary: #ff3b30 !important;
+
+  --panel: rgba(22,6,8,0.84) !important;
+  --panel-bg: rgba(22,6,8,0.84) !important;
+  --card-bg: rgba(30,8,10,0.70) !important;
+  --nav-bg: rgba(18,6,8,0.80) !important;
+
+  --grid-glow: rgba(255,59,48,0.22) !important;
+  --border-glow: rgba(255,59,48,0.28) !important;
+}
+
+/* Red wash overlay to tint globe/canvas/SVG backgrounds */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    radial-gradient(circle at 25% 18%, rgba(255,59,48,0.22), transparent 55%),
+    radial-gradient(circle at 70% 26%, rgba(255,106,99,0.14), transparent 60%),
+    radial-gradient(circle at 50% 85%, rgba(255,59,48,0.08), transparent 65%),
+    linear-gradient(180deg, rgba(255,59,48,0.06), rgba(0,0,0,0.0));
+  mix-blend-mode:screen;
+  opacity:0.75;
+}
+
+/* Ensure main content stays above overlay */
+body, #app, .app, .container, main { position:relative; z-index:1; }
+
+/* === Unchained home tile visibility (SAFE: CSS-only) === */
+#welcomePage [data-mode="spystations"],
+#welcomePage [data-mode="websdr"],
+#welcomePage [data-mode="satellite"],
+#welcomePage [data-mode="spaceweather"],
+#welcomePage [data-mode="sstv"],
+#welcomePage [data-mode="sstv_general"],
+#welcomePage [data-mode="weathersat"],
+#welcomePage [data-mode="wefax"],
+#welcomePage [data-mode="adsb"],
+#welcomePage [data-mode="ais"],
+#welcomePage [data-mode="aprs"],
+#welcomePage [data-mode="gps"],
+#welcomePage [data-mode="radiosonde"] {
+  display: none !important;
+}
+
+/* Hide the entire Tracking + Space mode categories on the home selector if still present */
+#welcomePage .mode-category-title:has(+ .mode-tiles) {
+  /* no-op placeholder for browsers without :has */
+}
+
+/* Remove "What's New" area by id/class if present */
+#whatsNew,
+.whats-new,
+#welcomeWhatsNew,
+#welcomePage h2:contains("What's New") { display:none !important; }

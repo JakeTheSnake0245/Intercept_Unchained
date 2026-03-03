@@ -37,7 +37,7 @@
 }
 
 .wxsat-strip-dot.decoding {
-    background: #00d4ff;
+    background: #ff3b30;
     animation: wxsat-pulse 0.8s ease-in-out infinite;
 }
 
@@ -66,7 +66,7 @@
 
 .wxsat-strip-btn:hover {
     background: var(--bg-hover, #252a3a);
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
 }
 
 .wxsat-strip-btn.stop {
@@ -104,7 +104,7 @@
 }
 
 .wxsat-strip-value.accent-cyan {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 /* ===== Auto-Schedule Toggle ===== */
@@ -150,7 +150,7 @@
 }
 
 .wxsat-loc-input:focus {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
     outline: none;
 }
 
@@ -247,7 +247,7 @@
 .wxsat-countdown-sat {
     font-size: 12px;
     font-weight: 600;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -348,7 +348,7 @@
 
 .wxsat-passes-count {
     font-size: 11px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -369,7 +369,7 @@
 }
 
 .wxsat-pass-card:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
     background: var(--bg-hover, #252a3a);
 }
 
@@ -414,7 +414,7 @@
 
 .wxsat-pass-mode.apt {
     background: rgba(0, 212, 255, 0.15);
-    color: #00d4ff;
+    color: #ff3b30;
 }
 
 .wxsat-pass-mode.lrpt {
@@ -455,7 +455,7 @@
 
 .wxsat-pass-quality.good {
     background: rgba(0, 212, 255, 0.15);
-    color: #00d4ff;
+    color: #ff3b30;
 }
 
 .wxsat-pass-quality.fair {
@@ -498,7 +498,7 @@
 
 .wxsat-panel-subtitle {
     font-size: 10px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -631,7 +631,7 @@
 
 .wxsat-gallery-count {
     font-size: 11px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -656,7 +656,7 @@
 }
 
 .wxsat-image-card:hover {
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
@@ -720,7 +720,7 @@
 
 .wxsat-image-product {
     font-size: 10px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
 }
 
@@ -817,7 +817,7 @@
 
 .wxsat-progress-bar .progress {
     height: 100%;
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, #ff3b30);
     border-radius: 2px;
     transition: width 0.3s ease;
 }
@@ -1048,7 +1048,7 @@
 }
 
 .wxsat-phase-step.completed {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     border-color: rgba(0, 212, 255, 0.3);
     background: rgba(0, 212, 255, 0.05);
     opacity: 0.7;
@@ -1120,8 +1120,8 @@
 }
 
 .wxsat-console-entry.wxsat-log-progress {
-    border-left-color: var(--accent-cyan, #00d4ff);
-    color: var(--accent-cyan, #00d4ff);
+    border-left-color: var(--accent-cyan, #ff3b30);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .wxsat-console-entry.wxsat-log-save {

@@ -237,7 +237,7 @@
         }
         .location-select:focus {
             outline: none;
-            border-color: #00d4ff;
+            border-color: #ff3b30;
         }
         .location-status-dot {
             width: 8px;
@@ -272,12 +272,12 @@
         let agents = [];
 
         let satellites = {
-            25544: { name: 'ISS (ZARYA)', color: '#00ffff' },
+            25544: { name: 'ISS (ZARYA)', color: '#ff3b30' },
             40069: { name: 'METEOR-M2', color: '#9370DB' },
             57166: { name: 'METEOR-M2-3', color: '#ff00ff' }
         };
 
-        const satColors = ['#00ffff', '#9370DB', '#ff00ff', '#00ff00', '#ff6600', '#ffff00', '#ff69b4', '#7b68ee'];
+        const satColors = ['#ff3b30', '#9370DB', '#ff00ff', '#00ff00', '#ff6600', '#ffff00', '#ff69b4', '#7b68ee'];
 
         function loadDashboardSatellites() {
             fetch('/satellite/tracked?enabled=true')
@@ -613,7 +613,7 @@
 
             const cs = getComputedStyle(document.documentElement);
             const bgColor = cs.getPropertyValue('--bg-card').trim() || '#0a0a0f';
-            const accentCyan = cs.getPropertyValue('--accent-cyan').trim() || '#00d4ff';
+            const accentCyan = cs.getPropertyValue('--accent-cyan').trim() || '#ff3b30';
             const accentRed = cs.getPropertyValue('--accent-red').trim() || '#ff4444';
             const textDim = cs.getPropertyValue('--text-dim').trim() || 'rgba(0,212,255,0.4)';
 
@@ -672,7 +672,7 @@
 
             // Pass trajectory
             if (pass && pass.trajectory) {
-                ctx.strokeStyle = pass.color || '#00d4ff';
+                ctx.strokeStyle = pass.color || '#ff3b30';
                 ctx.lineWidth = 3;
                 ctx.setLineDash([8, 4]);
                 ctx.beginPath();
@@ -700,7 +700,7 @@
                 if (maxElPoint) {
                     ctx.beginPath();
                     ctx.arc(maxElPoint.x, maxElPoint.y, 8, 0, Math.PI * 2);
-                    ctx.fillStyle = pass.color || '#00d4ff';
+                    ctx.fillStyle = pass.color || '#ff3b30';
                     ctx.fill();
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2;
@@ -738,7 +738,7 @@
                 const allCoords = [];
                 segments.forEach(seg => {
                     L.polyline(seg, {
-                        color: pass.color || '#00d4ff',
+                        color: pass.color || '#ff3b30',
                         weight: 4,
                         opacity: 1.0
                     }).addTo(trackLine);
@@ -749,7 +749,7 @@
                 if (pass.currentPos) {
                     const satIcon = L.divIcon({
                         className: 'sat-marker',
-                        html: `<div style="width: 16px; height: 16px; background: ${pass.color || '#00d4ff'}; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 20px ${pass.color || '#00d4ff'};"></div>`,
+                        html: `<div style="width: 16px; height: 16px; background: ${pass.color || '#ff3b30'}; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 20px ${pass.color || '#ff3b30'};"></div>`,
                         iconSize: [16, 16],
                         iconAnchor: [8, 8]
                     });
@@ -879,7 +879,7 @@
             const lon = parseFloat(document.getElementById('obsLon').value);
 
             let targetSatellite = selectedSatellite;
-            let satColor = satellites[selectedSatellite]?.color || '#00d4ff';
+            let satColor = satellites[selectedSatellite]?.color || '#ff3b30';
 
             if (selectedPass !== null && passes[selectedPass]) {
                 const pass = passes[selectedPass];
@@ -993,7 +993,7 @@
 
             const cs = getComputedStyle(document.documentElement);
             const bgColor = cs.getPropertyValue('--bg-card').trim() || '#0a0a0f';
-            const accentCyan = cs.getPropertyValue('--accent-cyan').trim() || '#00d4ff';
+            const accentCyan = cs.getPropertyValue('--accent-cyan').trim() || '#ff3b30';
             const accentRed = cs.getPropertyValue('--accent-red').trim() || '#ff4444';
             const accentGreen = cs.getPropertyValue('--accent-green').trim() || '#00ff88';
             const textPrimary = cs.getPropertyValue('--text-primary').trim() || '#fff';

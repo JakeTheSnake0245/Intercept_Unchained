@@ -1,0 +1,41 @@
+/* Meshtastic SDR Decoder Mode - keeps Intercept style; inherits global tint vars */
+#meshtasticSdrDashboard {
+  padding: 12px;
+}
+
+.meshsdr-card {
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
+}
+
+.meshsdr-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.meshsdr-input {
+  flex: 1;
+  min-width: 280px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+  color: inherit;
+}
+
+.meshsdr-btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.meshsdr-btn:hover {
+  border-color: rgba(255,255,255,0.22);
+}

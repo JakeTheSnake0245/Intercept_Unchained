@@ -133,8 +133,8 @@ function plotReceiversOnMap(receivers) {
 
         const marker = L.circleMarker([rx.lat, rx.lon], {
             radius: 6,
-            fillColor: rx.available ? '#00d4ff' : '#666',
-            color: rx.available ? '#00d4ff' : '#666',
+            fillColor: rx.available ? '#ff3b30' : '#666',
+            color: rx.available ? '#ff3b30' : '#666',
             weight: 1,
             opacity: 0.8,
             fillOpacity: 0.6,
@@ -146,7 +146,7 @@ function plotReceiversOnMap(receivers) {
                 ${rx.location ? `<span style="color: #aaa;">${escapeHtmlWebsdr(rx.location)}</span><br>` : ''}
                 <span style="color: #888;">Antenna: ${escapeHtmlWebsdr(rx.antenna || 'Unknown')}</span><br>
                 <span style="color: #888;">Users: ${rx.users}/${rx.users_max}</span><br>
-                <button onclick="selectReceiver(${idx})" style="margin-top: 6px; padding: 4px 12px; background: #00d4ff; color: #000; border: none; border-radius: 3px; cursor: pointer; font-weight: bold;">Listen</button>
+                <button onclick="selectReceiver(${idx})" style="margin-top: 6px; padding: 4px 12px; background: #ff3b30; color: #000; border: none; border-radius: 3px; cursor: pointer; font-weight: bold;">Listen</button>
             </div>
         `);
 
@@ -386,7 +386,7 @@ function plotReceiversOnGlobe(receivers) {
             receiverIndex: idx,
             radius: selected ? 0.52 : 0.38,
             altitude: selected ? 0.1 : 0.04,
-            color: selected ? '#00ff88' : (rx.available ? '#00d4ff' : '#5f6976'),
+            color: selected ? '#00ff88' : (rx.available ? '#ff3b30' : '#5f6976'),
             label: buildWebsdrPointLabel(rx, idx),
         });
     });
@@ -503,7 +503,7 @@ function showWebsdrGlobePopup(point, event) {
         ${rx.location ? `<div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 3px;">${escapeHtmlWebsdr(rx.location)}</div>` : ''}
         <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 2px;">Antenna: ${escapeHtmlWebsdr(rx.antenna || 'Unknown')}</div>
         <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 10px;">Users: ${rx.users}/${rx.users_max}</div>
-        <button type="button" data-websdr-listen style="width: 100%; padding: 5px 10px; background: #00d4ff; color: #041018; border: none; border-radius: 4px; cursor: pointer; font-weight: 700;">Listen</button>
+        <button type="button" data-websdr-listen style="width: 100%; padding: 5px 10px; background: #ff3b30; color: #041018; border: none; border-radius: 4px; cursor: pointer; font-weight: 700;">Listen</button>
     `;
     websdrGlobePopup.style.display = 'block';
 
@@ -542,7 +542,7 @@ function buildWebsdrPointLabel(rx, idx) {
     const antenna = escapeHtmlWebsdr(rx.antenna || 'Unknown antenna');
     return `
         <div style="padding: 4px 6px; font-size: 11px; background: rgba(4, 12, 19, 0.9); border: 1px solid rgba(0,212,255,0.28); border-radius: 4px;">
-            <div style="color: #00d4ff; font-weight: 600;">${escapeHtmlWebsdr(rx.name)}</div>
+            <div style="color: #ff3b30; font-weight: 600;">${escapeHtmlWebsdr(rx.name)}</div>
             <div style="color: #a5b1c3;">${location}</div>
             <div style="color: #8f9fb3;">${antenna} · ${rx.users}/${rx.users_max}</div>
             <div style="color: #7a899b; margin-top: 2px;">Receiver #${idx + 1}</div>

@@ -763,7 +763,7 @@ const WeatherSat = (function() {
         const trajectory = pass.trajectory;
         if (!trajectory || trajectory.length === 0) return;
 
-        const color = pass.mode === 'LRPT' ? '#00ff88' : '#00d4ff';
+        const color = pass.mode === 'LRPT' ? '#00ff88' : '#ff3b30';
 
         ctx.beginPath();
         ctx.strokeStyle = color;

@@ -129,8 +129,8 @@ const SystemHealth = (function () {
 
         return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
             '<defs><linearGradient id="sparkGradient" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%" stop-color="var(--accent-cyan, #00d4ff)" stop-opacity="0.3"/>' +
-            '<stop offset="100%" stop-color="var(--accent-cyan, #00d4ff)" stop-opacity="0.0"/>' +
+            '<stop offset="0%" stop-color="var(--accent-cyan, #ff3b30)" stop-opacity="0.3"/>' +
+            '<stop offset="100%" stop-color="var(--accent-cyan, #ff3b30)" stop-opacity="0.0"/>' +
             '</linearGradient></defs>' +
             '<polygon class="sys-sparkline-area" points="' + areaPoints + '"/>' +
             '<polyline class="sys-sparkline-line" points="' + points.join(' ') + '"/>' +
@@ -533,7 +533,7 @@ const SystemHealth = (function () {
                         .pointsData([])
                         .pointRadius(0.8)
                         .pointAltitude(0.01)
-                        .pointColor(function () { return '#00d4ff'; });
+                        .pointColor(function () { return '#ff3b30'; });
 
                     var controls = globeInstance.controls();
                     if (controls) {
@@ -566,7 +566,7 @@ const SystemHealth = (function () {
             lat: locationData.lat,
             lng: locationData.lon,
             size: 0.8,
-            color: '#00d4ff',
+            color: '#ff3b30',
         }]);
 
         // Snap view

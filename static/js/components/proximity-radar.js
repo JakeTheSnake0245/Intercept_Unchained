@@ -101,7 +101,7 @@ const ProximityRadar = (function() {
 
                 <!-- Center point -->
                 <circle cx="${center}" cy="${center}" r="${CONFIG.centerRadius}"
-                        fill="#00d4ff" filter="url(#glow)" />
+                        fill="#ff3b30" filter="url(#glow)" />
 
                 <!-- Device dots container -->
                 <g class="radar-devices"></g>
@@ -263,7 +263,7 @@ const ProximityRadar = (function() {
                         dot.setAttribute('r', dotSize);
                         dot.setAttribute('fill', color);
                         dot.setAttribute('fill-opacity', isSelected ? 1 : 0.4 + confidence * 0.5);
-                        dot.setAttribute('stroke', isSelected ? '#00d4ff' : color);
+                        dot.setAttribute('stroke', isSelected ? '#ff3b30' : color);
                         dot.setAttribute('stroke-width', isSelected ? 2 : 1);
                     }
 
@@ -329,7 +329,7 @@ const ProximityRadar = (function() {
                 dot.setAttribute('r', dotSize);
                 dot.setAttribute('fill', color);
                 dot.setAttribute('fill-opacity', isSelected ? 1 : 0.4 + confidence * 0.5);
-                dot.setAttribute('stroke', isSelected ? '#00d4ff' : color);
+                dot.setAttribute('stroke', isSelected ? '#ff3b30' : color);
                 dot.setAttribute('stroke-width', isSelected ? 2 : 1);
                 innerG.appendChild(dot);
 
@@ -363,7 +363,7 @@ const ProximityRadar = (function() {
         ring.classList.add('radar-select-ring');
         ring.setAttribute('r', dotSize + 8);
         ring.setAttribute('fill', 'none');
-        ring.setAttribute('stroke', '#00d4ff');
+        ring.setAttribute('stroke', '#ff3b30');
         ring.setAttribute('stroke-width', '2');
         ring.setAttribute('stroke-opacity', '0.8');
 
@@ -560,7 +560,7 @@ const ProximityRadar = (function() {
         const dot = el.querySelector('circle:not(.radar-device-hitarea):not(.radar-select-ring)');
         if (dot && dot.getAttribute('fill') !== 'none' && dot.getAttribute('fill') !== 'transparent') {
             dot.setAttribute('fill-opacity', '1');
-            dot.setAttribute('stroke', '#00d4ff');
+            dot.setAttribute('stroke', '#ff3b30');
             dot.setAttribute('stroke-width', '2');
         }
 
@@ -571,7 +571,7 @@ const ProximityRadar = (function() {
             ring.classList.add('radar-select-ring');
             ring.setAttribute('r', dotSize + 8);
             ring.setAttribute('fill', 'none');
-            ring.setAttribute('stroke', '#00d4ff');
+            ring.setAttribute('stroke', '#ff3b30');
             ring.setAttribute('stroke-width', '2');
             ring.setAttribute('stroke-opacity', '0.8');
 

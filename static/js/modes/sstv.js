@@ -232,7 +232,7 @@ const SSTV = (function() {
 
         // Create ground track line
         issTrackLine = L.polyline([], {
-            color: '#00d4ff',
+            color: '#ff3b30',
             weight: 2,
             opacity: 0.6,
             dashArray: '5, 5'

@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import logging
 import os
+
+# Optional GitHub API token for updater rate-limits
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN', '').strip()
 import sys
 
 # Application version

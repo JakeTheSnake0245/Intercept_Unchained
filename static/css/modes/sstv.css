@@ -112,7 +112,7 @@
 }
 
 .sstv-strip-btn.start:hover {
-    background: var(--accent-cyan-bright, #00d4ff);
+    background: var(--accent-cyan-bright, #ff3b30);
 }
 
 .sstv-strip-btn.stop {

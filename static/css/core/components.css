@@ -731,12 +731,12 @@
 
 [data-theme="light"] .card,
 [data-theme="light"] .panel {
-    border-color: rgba(31, 95, 168, 0.24);
+    border-color: rgba(255, 59, 48, 0.24);
 }
 
 [data-theme="light"] .card-header,
 [data-theme="light"] .panel-header {
-    border-bottom-color: rgba(31, 95, 168, 0.2);
+    border-bottom-color: rgba(255, 59, 48, 0.2);
     background: linear-gradient(180deg, rgba(243, 247, 252, 0.96) 0%, rgba(233, 239, 247, 0.95) 100%);
 }
 

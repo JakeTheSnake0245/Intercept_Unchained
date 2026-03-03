@@ -719,7 +719,7 @@
             if (onWatchlist && !alertState.watchlist) {
                 alertState.watchlist = true;
                 playAlertSound('military');  // Use military sound for watchlist
-                showAlertBanner(`WATCHLIST: ${ac.callsign || ac.registration || icao} detected!`, '#00d4ff');
+                showAlertBanner(`WATCHLIST: ${ac.callsign || ac.registration || icao} detected!`, '#ff3b30');
             } else if (militaryInfo.military && !alertState.military) {
                 alertState.military = true;
                 playAlertSound('military');
@@ -881,7 +881,7 @@
             const value = ac.callsign || ac.registration || ac.icao;
             const type = ac.callsign ? 'callsign' : (ac.registration ? 'registration' : 'icao');
             addToWatchlist(value, type);
-            showAlertBanner(`Added ${value} to watchlist`, '#00d4ff');
+            showAlertBanner(`Added ${value} to watchlist`, '#ff3b30');
         }
 
         // ============================================
@@ -910,8 +910,8 @@
             '7700': { type: 'emergency', name: 'EMERGENCY', desc: 'General emergency (mayday)', color: '#ff0000' },
             // Special codes
             '7777': { type: 'special', name: 'MILITARY INTERCEPT', desc: 'Military interceptor operations', color: '#ff00ff' },
-            '7000': { type: 'vfr', name: 'VFR (EU)', desc: 'Visual Flight Rules - Europe', color: '#00d4ff' },
-            '1200': { type: 'vfr', name: 'VFR (US/CA)', desc: 'Visual Flight Rules - North America', color: '#00d4ff' },
+            '7000': { type: 'vfr', name: 'VFR (EU)', desc: 'Visual Flight Rules - Europe', color: '#ff3b30' },
+            '1200': { type: 'vfr', name: 'VFR (US/CA)', desc: 'Visual Flight Rules - North America', color: '#ff3b30' },
             '2000': { type: 'standard', name: 'UNASSIGNED', desc: 'No assigned code / entering controlled airspace', color: '#888888' },
             '1000': { type: 'standard', name: 'IFR (EU)', desc: 'Instrument Flight Rules with no assigned code', color: '#00ff88' },
             '0000': { type: 'special', name: 'DISCRETE', desc: 'Military/special operations', color: '#ff00ff' },
@@ -919,7 +919,7 @@
             '5000': { type: 'special', name: 'MILITARY (UK)', desc: 'UK military operations', color: '#556b2f' },
             '0033': { type: 'special', name: 'PARACHUTE OPS', desc: 'Parachute dropping in progress', color: '#ffaa00' },
             '7001': { type: 'special', name: 'VFR INTRUSION', desc: 'VFR aircraft entering controlled airspace', color: '#ffaa00' },
-            '7004': { type: 'special', name: 'AEROBATIC', desc: 'Aerobatic flight display', color: '#00d4ff' },
+            '7004': { type: 'special', name: 'AEROBATIC', desc: 'Aerobatic flight display', color: '#ff3b30' },
             '7010': { type: 'special', name: 'RADIO EQUIPPED', desc: 'IFR flight (UK zones)', color: '#00ff88' }
         };
 
@@ -1386,7 +1386,7 @@ ACARS: ${r.statistics.acarsMessages} messages`;
         function getAltitudeColor(alt) {
             if (!alt || alt <= 0) return '#888888';
             if (alt < 10000) return '#00ff88';   // Green - low
-            if (alt < 25000) return '#00d4ff';   // Cyan - medium
+            if (alt < 25000) return '#ff3b30';   // Cyan - medium
             if (alt < 35000) return '#ffcc00';   // Yellow - high
             return '#ff9500';                    // Orange - very high
         }
@@ -3073,7 +3073,7 @@ sudo make install</code>
                 `<div style="background:#556b2f;color:#fff;padding:3px 8px;border-radius:4px;font-size:10px;text-align:center;margin-bottom:8px;">MILITARY${militaryInfo.country ? ' (' + militaryInfo.country + ')' : ''}</div>` : '';
             // Aircraft type info line (shown if available from database)
             const typeInfo = (typeCode || typeDesc) ?
-                `<div style="color:#00d4ff;font-size:11px;margin-bottom:6px;">${typeDesc || typeCode}${registration ? ' • ' + registration : ''}</div>` : '';
+                `<div style="color:#ff3b30;font-size:11px;margin-bottom:6px;">${typeDesc || typeCode}${registration ? ' • ' + registration : ''}</div>` : '';
 
             container.innerHTML = `
                 <div id="aircraftPhotoContainer" style="display:none;margin-bottom:10px;">
@@ -4602,12 +4602,12 @@ sudo make install</code>
                 <button class="antenna-guide-modal-close" onclick="toggleAntennaGuide()">&times;</button>
             </div>
             <div class="antenna-guide-modal-body">
-                <p style="margin-bottom: 10px; color: var(--accent-cyan, #00d4ff); font-weight: 600; font-size: 12px;">
+                <p style="margin-bottom: 10px; color: var(--accent-cyan, #ff3b30); font-weight: 600; font-size: 12px;">
                     1090 MHz &mdash; stock SDR antenna can work but is not ideal
                 </p>
 
                 <div class="antenna-section">
-                    <strong style="color: var(--accent-cyan, #00d4ff);">Stock Telescopic Antenna</strong>
+                    <strong style="color: var(--accent-cyan, #ff3b30);">Stock Telescopic Antenna</strong>
                     <ul>
                         <li><strong>1090 MHz:</strong> Collapse to ~6.9 cm (quarter-wave). It works for nearby aircraft</li>
                         <li><strong>Range:</strong> Expect ~50 NM (90 km) indoors, ~100 NM outdoors</li>
@@ -4625,7 +4625,7 @@ sudo make install</code>
                 </div>
 
                 <div class="antenna-section">
-                    <strong style="color: var(--accent-cyan, #00d4ff);">Commercial Options</strong>
+                    <strong style="color: var(--accent-cyan, #ff3b30);">Commercial Options</strong>
                     <ul>
                         <li><strong>FlightAware antenna:</strong> ~$35, 1090 MHz tuned, 66cm fiberglass whip</li>
                         <li><strong>ADSBexchange whip:</strong> ~$40, similar performance</li>
@@ -4634,7 +4634,7 @@ sudo make install</code>
                 </div>
 
                 <div class="antenna-section">
-                    <strong style="color: var(--accent-cyan, #00d4ff);">Placement &amp; LNA</strong>
+                    <strong style="color: var(--accent-cyan, #ff3b30);">Placement &amp; LNA</strong>
                     <ul>
                         <li><strong>Location:</strong> OUTDOORS, as high as possible. Roof or mast mount</li>
                         <li><strong>Height:</strong> Every 3m higher adds ~10 NM range (line-of-sight)</li>
@@ -4646,7 +4646,7 @@ sudo make install</code>
                 </div>
 
                 <div class="antenna-section">
-                    <strong style="color: var(--accent-cyan, #00d4ff);">Quick Reference</strong>
+                    <strong style="color: var(--accent-cyan, #ff3b30);">Quick Reference</strong>
                     <table class="antenna-ref-table">
                         <tr><td>ADS-B frequency</td><td>1090 MHz</td></tr>
                         <tr><td>Quarter-wave length</td><td>6.9 cm</td></tr>
@@ -4774,7 +4774,7 @@ sudo make install</code>
         .squawk-ref-table .squawk-code {
             font-family: var(--font-mono);
             font-weight: bold;
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
         }
         .squawk-ref-table tr.emergency .squawk-code {
             color: #ff4444;
@@ -4795,7 +4795,7 @@ sudo make install</code>
         .watchlist-btn {
             background: transparent;
             border: 1px solid var(--border-color, #444);
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
             padding: 4px 8px;
             border-radius: 4px;
             cursor: pointer;
@@ -4803,7 +4803,7 @@ sudo make install</code>
             transition: all 0.2s;
         }
         .watchlist-btn:hover {
-            background: var(--accent-cyan, #00d4ff);
+            background: var(--accent-cyan, #ff3b30);
             color: #000;
         }
 
@@ -4844,7 +4844,7 @@ sudo make install</code>
             font-weight: 600;
             font-size: 12px;
             letter-spacing: 0.1em;
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
         }
         .antenna-guide-modal-close {
             background: none;
@@ -4946,7 +4946,7 @@ sudo make install</code>
             font-weight: 600;
             font-size: 12px;
             letter-spacing: 0.1em;
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
         }
         .watchlist-modal-close {
             background: none;
@@ -4981,7 +4981,7 @@ sudo make install</code>
         }
         .watchlist-add-form button {
             padding: 6px 16px;
-            background: var(--accent-cyan, #00d4ff);
+            background: var(--accent-cyan, #ff3b30);
             color: #000;
             border: none;
             border-radius: 4px;
@@ -5024,7 +5024,7 @@ sudo make install</code>
         .watchlist-value {
             font-family: var(--font-mono);
             font-weight: bold;
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
             font-size: 13px;
         }
         .watchlist-type {
@@ -5065,14 +5065,14 @@ sudo make install</code>
 
         /* Watched aircraft highlight in list */
         .aircraft-item.watched {
-            border-left: 3px solid var(--accent-cyan, #00d4ff);
+            border-left: 3px solid var(--accent-cyan, #ff3b30);
         }
         .aircraft-item.watched::before {
             content: '★';
             position: absolute;
             right: 8px;
             top: 8px;
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
             font-size: 10px;
         }
 
@@ -5095,7 +5095,7 @@ sudo make install</code>
         }
         .agent-select-sm:focus {
             outline: none;
-            border-color: var(--accent-cyan, #00d4ff);
+            border-color: var(--accent-cyan, #ff3b30);
         }
         .agent-status-dot {
             width: 8px;
@@ -5113,7 +5113,7 @@ sudo make install</code>
         }
         .agent-badge {
             font-size: 9px;
-            color: var(--accent-cyan, #00d4ff);
+            color: var(--accent-cyan, #ff3b30);
             background: rgba(0, 200, 255, 0.1);
             padding: 1px 4px;
             border-radius: 2px;
@@ -5380,7 +5380,7 @@ sudo make install</code>
             if (name === 'Local') {
                 sourceEl.style.color = 'var(--accent-green, #00ff88)';
             } else {
-                sourceEl.style.color = 'var(--accent-cyan, #00d4ff)';
+                sourceEl.style.color = 'var(--accent-cyan, #ff3b30)';
             }
         }
 

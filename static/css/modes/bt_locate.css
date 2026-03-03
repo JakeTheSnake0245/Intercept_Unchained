@@ -441,7 +441,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     background: rgba(0, 212, 255, 0.1);
     border: 1px solid rgba(0, 212, 255, 0.3);
     border-radius: 4px;
@@ -453,7 +453,7 @@
 
 .btl-detect-irk-btn:hover {
     background: rgba(0, 212, 255, 0.2);
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
 }
 
 .btl-detect-irk-btn:disabled {

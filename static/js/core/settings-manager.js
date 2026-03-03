@@ -705,7 +705,7 @@ const Settings = {
                 bottom: 20px;
                 right: 20px;
                 background: var(--bg-dark, #0a0a0f);
-                border: 1px solid var(--accent-cyan, #00d4ff);
+                border: 1px solid var(--accent-cyan, #ff3b30);
                 border-radius: 8px;
                 padding: 12px 16px;
                 display: flex;
@@ -719,7 +719,7 @@ const Settings = {
                     Reload to apply changes
                 </span>
                 <button onclick="location.reload()" style="
-                    background: var(--accent-cyan, #00d4ff);
+                    background: var(--accent-cyan, #ff3b30);
                     border: none;
                     color: #000;
                     padding: 6px 12px;

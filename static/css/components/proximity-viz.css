@@ -56,9 +56,9 @@
 }
 
 .bt-radar-filter-btn.active {
-    background: #00d4ff !important;
+    background: #ff3b30 !important;
     color: #000 !important;
-    border-color: #00d4ff !important;
+    border-color: #ff3b30 !important;
 }
 
 #btRadarPauseBtn.active {
@@ -100,7 +100,7 @@
 }
 
 .heatmap-select:hover {
-    border-color: var(--accent-color, #00d4ff);
+    border-color: var(--accent-color, #ff3b30);
 }
 
 .heatmap-btn {

@@ -499,7 +499,7 @@ const SubGhz = (function() {
         // Auto-scale low-amplitude noise/signal so activity is visible.
         const gain = peak > 0 ? Math.min(12, 0.92 / peak) : 1;
 
-        ctx.strokeStyle = '#00d4ff';
+        ctx.strokeStyle = '#ff3b30';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         const n = data.length;
@@ -1779,7 +1779,7 @@ const SubGhz = (function() {
 
         // Spectrum line
         ctx.beginPath();
-        ctx.strokeStyle = '#00d4ff';
+        ctx.strokeStyle = '#ff3b30';
         ctx.lineWidth = 1.5;
 
         for (let i = 0; i < sweepData.length; i++) {

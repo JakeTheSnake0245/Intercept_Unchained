@@ -12,6 +12,7 @@ def register_blueprints(app):
     from .dsc import dsc_bp
     from .listening_post import receiver_bp
     from .meshtastic import meshtastic_bp
+    from .meshtastic_sdr import meshtastic_sdr_bp
     from .morse import morse_bp
     from .offline import offline_bp
     from .pager import pager_bp
@@ -41,6 +42,7 @@ def register_blueprints(app):
     app.register_blueprint(correlation_bp)
     app.register_blueprint(receiver_bp)
     app.register_blueprint(meshtastic_bp)
+    app.register_blueprint(meshtastic_sdr_bp)
     app.register_blueprint(tscm_bp)
     app.register_blueprint(offline_bp)  # Offline mode settings
     app.register_blueprint(updater_bp)  # GitHub update checking

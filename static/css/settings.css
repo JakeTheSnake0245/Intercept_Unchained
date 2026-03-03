@@ -54,7 +54,7 @@
 .settings-header h2 .icon {
     width: 20px;
     height: 20px;
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .settings-close {
@@ -103,7 +103,7 @@
 }
 
 .settings-tab.active {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .settings-tab.active::after {
@@ -113,7 +113,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--accent-cyan, #00d4ff);
+    background: var(--accent-cyan, #ff3b30);
 }
 
 /* Settings Sections */
@@ -256,8 +256,8 @@
 }
 
 .toggle-switch input:checked + .toggle-slider {
-    background-color: var(--accent-cyan, #00d4ff);
-    border-color: var(--accent-cyan, #00d4ff);
+    background-color: var(--accent-cyan, #ff3b30);
+    border-color: var(--accent-cyan, #ff3b30);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
@@ -288,7 +288,7 @@
 
 .settings-select:focus {
     outline: none;
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
 }
 
 /* Text Input */
@@ -304,7 +304,7 @@
 
 .settings-input:focus {
     outline: none;
-    border-color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
 }
 
 .settings-input::placeholder {
@@ -370,8 +370,8 @@
 }
 
 .check-assets-btn:hover {
-    border-color: var(--accent-cyan, #00d4ff);
-    color: var(--accent-cyan, #00d4ff);
+    border-color: var(--accent-cyan, #ff3b30);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 .check-assets-btn:disabled {
@@ -408,7 +408,7 @@
 }
 
 .about-info a {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
     text-decoration: none;
 }
 
@@ -418,7 +418,7 @@
 
 .about-version {
     font-family: var(--font-mono);
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 /* Donate Button */
@@ -471,7 +471,7 @@
 }
 
 .settings-info strong {
-    color: var(--accent-cyan, #00d4ff);
+    color: var(--accent-cyan, #ff3b30);
 }
 
 /* Map tile variants */

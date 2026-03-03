@@ -298,7 +298,7 @@
 }
 
 .mesh-strip-btn.connect:hover {
-    background: var(--accent-cyan-bright, #00d4ff);
+    background: var(--accent-cyan-bright, #ff3b30);
 }
 
 .mesh-strip-btn.disconnect {
@@ -471,12 +471,12 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: #00ffff;  /* Bright cyan for maximum visibility */
+    background: #ff3b30;  /* Bright cyan for maximum visibility */
     border: 3px solid #ffffff;
     border-radius: 50%;
     box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.6),
-        0 0 20px 8px rgba(0, 255, 255, 0.7),  /* Strong outer glow */
+        0 0 20px 8px rgba(255, 59, 48, 0.7),  /* Strong outer glow */
         inset 0 0 8px rgba(255, 255, 255, 0.3);  /* Inner highlight */
     color: #000;
     font-family: var(--font-mono);

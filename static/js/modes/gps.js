@@ -17,7 +17,7 @@ const GPS = (function() {
 
     // Constellation color map
     const CONST_COLORS = {
-        'GPS':     '#00d4ff',
+        'GPS':     '#ff3b30',
         'GLONASS': '#00ff88',
         'Galileo': '#ff8800',
         'BeiDou':  '#ff4466',
