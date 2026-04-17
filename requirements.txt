@@ -12,6 +12,9 @@ psycopg2-binary>=2.9.9
 # BLE scanning with manufacturer data detection (optional - for TSCM)
 bleak>=0.21.0
 
+# ZMQ pub/sub for C-UAS Remote ID and DJI DroneID real-time streams (optional)
+pyzmq>=25.0.0
+
 # Satellite tracking (optional - only needed for satellite features)
 skyfield>=1.45
 

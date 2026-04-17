@@ -288,6 +288,7 @@ TOOL_KEYS=(
   rtl_sdr multimon_ng rtl_433 dump1090 acarsdec dumpvdl2 ffmpeg gpsd
   hackrf rtlamr ais_catcher direwolf satdump radiosonde
   aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr rtlsdr_blog
+  droneid_go samples2djidroneid
 )
 TOOL_ENTRIES=(
   "1|rtl_fm|RTL-SDR tools (rtl_fm, rtl_test, rtl_tcp)"
@@ -311,6 +312,8 @@ TOOL_ENTRIES=(
   "8|ubertooth-btle|Ubertooth BLE sniffer"
   "8|SoapySDRUtil|SoapySDR utility"
   "1|SKIP|RTL-SDR Blog V4 drivers"
+  "8|droneid-go|C-UAS Remote ID decoder (ZMQ)"
+  "8|SKIP|C-UAS DJI DroneID offline decoder (Docker)"
 )
 
 # Lookup helper: get entry by key name
@@ -411,7 +414,7 @@ show_profile_menu() {
   echo -e "  ${BOLD}1)${NC} Core SIGINT     — rtl_sdr, multimon-ng, rtl_433, dump1090, acarsdec, dumpvdl2, ffmpeg, gpsd"
   echo -e "  ${BOLD}2)${NC} Maritime & Radio — AIS-catcher, direwolf"
   echo -e "  ${BOLD}3)${NC} Weather & Space  — SatDump, radiosonde_auto_rx"
-  echo -e "  ${BOLD}4)${NC} RF Security      — aircrack-ng, HackRF, BlueZ, hcxtools, Ubertooth, SoapySDR"
+  echo -e "  ${BOLD}4)${NC} RF Security      — aircrack-ng, HackRF, BlueZ, hcxtools, Ubertooth, SoapySDR, droneid-go, samples2djidroneid (C-UAS)"
   echo -e "  ${BOLD}5)${NC} Full SIGINT      — All of the above"
   echo -e "  ${BOLD}6)${NC} Custom           — Per-tool checklist"
   draw_line 50
@@ -622,7 +625,8 @@ install_python_deps() {
   # Pure-Python packages: install without --only-binary so they always succeed regardless of platform
   for pkg in "flask-sock" "simple-websocket>=0.5.1" "websocket-client>=1.6.0" \
              "skyfield>=1.45" "bleak>=0.21.0" "meshtastic>=2.0.0" \
-             "qrcode[pil]>=7.4" "gunicorn>=21.2.0" "psutil>=5.9.0"; do
+             "qrcode[pil]>=7.4" "gunicorn>=21.2.0" "psutil>=5.9.0" \
+             "pyzmq>=25.0.0"; do
     pkg_name="${pkg%%[><=]*}"
     info "  Installing ${pkg_name}..."
     if ! $PIP install $PIP_OPTS "$pkg"; then
@@ -1802,6 +1806,82 @@ install_tool_soapysdr() {
   fi
 }
 
+install_tool_droneid_go() {
+  if cmd_exists droneid-go; then
+    ok "droneid-go already installed"
+    return 0
+  fi
+
+  if [[ "$OS" == "macos" ]]; then
+    warn "droneid-go: macOS not supported — Linux/ARM only"
+    return 0
+  fi
+
+  echo
+  info "droneid-go decodes Wi-Fi Aware Remote ID frames and streams them via ZMQ."
+  info "Required for CUAS Remote ID subtool. Needs Go 1.21+ and a Wi-Fi adapter."
+  if ! ask_yes_no "Do you want to install droneid-go?"; then
+    warn "Skipping droneid-go. Remote ID detection will not be available."
+    return 0
+  fi
+
+  # Ensure Go is available
+  if ! cmd_exists go; then
+    info "Go not found — installing golang..."
+    apt_install golang-go || {
+      warn "Could not install Go via apt. Install Go 1.21+ manually then re-run."
+      return 1
+    }
+  fi
+
+  local INSTALL_DIR="/opt/droneid-go"
+  local REPO="https://github.com/alphafox02/droneid"
+  info "Cloning droneid-go from ${REPO}..."
+  if $SUDO git clone --depth 1 "$REPO" "$INSTALL_DIR" 2>/dev/null || \
+     git clone --depth 1 "$REPO" "$INSTALL_DIR" 2>/dev/null; then
+    info "Building droneid-go..."
+    if (cd "$INSTALL_DIR" && go build -o droneid-go . 2>/dev/null); then
+      $SUDO install -m 755 "$INSTALL_DIR/droneid-go" /usr/local/bin/droneid-go || \
+        install -m 755 "$INSTALL_DIR/droneid-go" /usr/local/bin/droneid-go
+      ok "droneid-go installed to /usr/local/bin/droneid-go"
+    else
+      warn "droneid-go build failed. Check Go version (need 1.21+) and retry."
+      return 1
+    fi
+  else
+    warn "Could not clone droneid-go repo. Check internet access and git."
+    return 1
+  fi
+}
+
+install_tool_samples2djidroneid() {
+  if [[ "$OS" == "macos" ]]; then
+    warn "samples2djidroneid Docker image: not supported on macOS"
+    return 0
+  fi
+
+  echo
+  info "samples2djidroneid is a Docker-based offline DJI DroneID IQ decoder."
+  info "Required for CUAS DJI DroneID subtool. Needs Docker and HackRF hardware."
+  if ! ask_yes_no "Do you want to pull the samples2djidroneid Docker image?"; then
+    warn "Skipping samples2djidroneid. DJI DroneID offline decode will not be available."
+    return 0
+  fi
+
+  if ! cmd_exists docker; then
+    warn "Docker not found. Install Docker first: https://docs.docker.com/engine/install/"
+    return 1
+  fi
+
+  info "Pulling cemaxecuter/samples2djidroneid Docker image..."
+  if docker pull cemaxecuter/samples2djidroneid:latest; then
+    ok "samples2djidroneid Docker image ready"
+  else
+    warn "Docker pull failed. Check Docker daemon is running and you have internet access."
+    return 1
+  fi
+}
+
 # Install tools matching a profile bitmask
 install_profiles() {
   local mask="$1"
@@ -1865,6 +1945,7 @@ install_profiles() {
     ais_catcher direwolf
     satdump radiosonde
     aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr
+    droneid_go samples2djidroneid
   )
 
   for key in "${ordered_tools[@]}"; do
@@ -1939,6 +2020,7 @@ install_custom() {
     ais_catcher direwolf
     satdump radiosonde
     aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr
+    droneid_go samples2djidroneid
   )
 
   local idx=1
@@ -2670,6 +2752,7 @@ do_view_status() {
     ais_catcher direwolf
     satdump radiosonde
     aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr
+    droneid_go samples2djidroneid
   )
 
   for key in "${ordered_tools[@]}"; do
