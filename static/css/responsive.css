@@ -1,0 +1,770 @@
+/* ============================================
+   RESPONSIVE UTILITIES - Intercept Unchained
+   Shared responsive foundation for all pages
+   ============================================ */
+
+/* ============== CSS VARIABLES ============== */
+:root {
+    /* Touch targets */
+    --touch-min: 44px;
+    --touch-comfortable: 48px;
+
+    /* Responsive spacing */
+    --spacing-xs: clamp(4px, 1vw, 8px);
+    --spacing-sm: clamp(8px, 2vw, 12px);
+    --spacing-md: clamp(12px, 3vw, 20px);
+    --spacing-lg: clamp(16px, 4vw, 32px);
+
+    /* Responsive typography */
+    --font-xs: clamp(10px, 2.5vw, 11px);
+    --font-sm: clamp(11px, 2.8vw, 12px);
+    --font-base: clamp(13px, 3vw, 14px);
+    --font-md: clamp(14px, 3.5vw, 16px);
+    --font-lg: clamp(16px, 4vw, 20px);
+    --font-xl: clamp(20px, 5vw, 28px);
+    --font-2xl: clamp(24px, 6vw, 40px);
+
+    /* Header height for calculations */
+    --header-height: 48px;
+    --nav-height: 44px;
+}
+
+@media (min-width: 768px) {
+    :root {
+        --header-height: 48px;
+        --nav-height: 48px;
+    }
+}
+
+@media (min-width: 1024px) {
+    :root {
+        --header-height: 48px;
+        --nav-height: 0px;
+    }
+}
+
+/* ============== VIEWPORT HEIGHT FIX ============== */
+/* Handles iOS Safari address bar and dynamic viewport */
+.full-height {
+    height: 100dvh;
+    height: 100vh; /* Fallback */
+}
+
+@supports (-webkit-touch-callout: none) {
+    .full-height {
+        height: -webkit-fill-available;
+    }
+}
+
+/* ============== HAMBURGER BUTTON ============== */
+.hamburger-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: var(--touch-min);
+    height: var(--touch-min);
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border-color, #1f2937);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    z-index: 1001;
+    flex-shrink: 0;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.hamburger-btn:hover {
+    background: var(--bg-tertiary, #151a23);
+    border-color: var(--accent-cyan, #4a9eff);
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--accent-cyan, #4a9eff);
+    margin: 2px 0;
+    border-radius: 1px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.hamburger-btn.active span:nth-child(1) {
+    transform: rotate(45deg) translate(4px, 4px);
+}
+
+.hamburger-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(4px, -4px);
+}
+
+/* Hide hamburger on desktop */
+@media (min-width: 1024px) {
+    .hamburger-btn {
+        display: none;
+    }
+}
+
+/* ============== MOBILE DRAWER ============== */
+.mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(360px, 100vw);
+    height: 100dvh;
+    height: 100vh; /* Fallback */
+    background: var(--bg-secondary, #0f1218);
+    border-right: 1px solid var(--border-color, #1f2937);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 60px;
+}
+
+.mobile-drawer.open {
+    transform: translateX(0);
+}
+
+/* Show sidebar normally on desktop */
+@media (min-width: 1024px) {
+    .mobile-drawer {
+        position: static;
+        transform: none;
+        width: auto;
+        height: auto;
+        padding-top: 0;
+        z-index: auto;
+    }
+}
+
+/* ============== DRAWER OVERLAY ============== */
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 999;
+}
+
+.drawer-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Hide overlay on desktop */
+@media (min-width: 1024px) {
+    .drawer-overlay {
+        display: none;
+    }
+}
+
+/* ============== TOUCH TARGETS ============== */
+@media (max-width: 1023px) {
+    /* Ensure minimum touch target size for interactive elements */
+    button,
+    .btn,
+    .preset-btn,
+    .mode-nav-btn,
+    .control-btn,
+    .nav-action-btn,
+    .icon-btn {
+        min-height: var(--touch-min);
+        min-width: var(--touch-min);
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"],
+    input[type="search"] {
+        min-height: var(--touch-min);
+        padding: 10px 12px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    .checkbox-group label,
+    .radio-group label {
+        min-height: var(--touch-min);
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* ============== RESPONSIVE UTILITIES ============== */
+/* Hide on mobile */
+.hide-mobile {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .hide-mobile {
+        display: initial;
+    }
+}
+
+/* Hide on tablet and up */
+.show-mobile-only {
+    display: initial;
+}
+
+@media (min-width: 768px) {
+    .show-mobile-only {
+        display: none;
+    }
+}
+
+/* Hide on desktop */
+.hide-desktop {
+    display: initial;
+}
+
+@media (min-width: 1024px) {
+    .hide-desktop {
+        display: none;
+    }
+}
+
+/* Show only on desktop */
+.show-desktop-only {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .show-desktop-only {
+        display: initial;
+    }
+}
+
+/* ============== SCROLLABLE AREAS ============== */
+.scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.scroll-x::-webkit-scrollbar {
+    height: 4px;
+}
+
+.scroll-x::-webkit-scrollbar-thumb {
+    background: var(--border-color, #1f2937);
+    border-radius: 2px;
+}
+
+/* Hide scrollbar on mobile for cleaner look */
+@media (max-width: 767px) {
+    .scroll-x-mobile-hidden {
+        scrollbar-width: none;
+    }
+
+    .scroll-x-mobile-hidden::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ============== MOBILE NAVIGATION BAR ============== */
+.mobile-nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--bg-tertiary, #151a23);
+    border-bottom: 1px solid var(--border-color, #1f2937);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.mobile-nav-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.mobile-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--bg-card, #121620);
+    border: 1px solid var(--border-color, #1f2937);
+    border-radius: 6px;
+    color: var(--text-secondary, #9ca3af);
+    font-size: var(--font-xs);
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 36px;
+}
+
+.mobile-nav-btn:hover,
+.mobile-nav-btn.active {
+    background: var(--bg-elevated, #1a202c);
+    border-color: var(--accent-cyan, #4a9eff);
+    color: var(--text-primary, #e8eaed);
+}
+
+.mobile-nav-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+/* ============== MOBILE NAV GROUPS ============== */
+.mobile-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.mobile-nav-group-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary, #6b7280);
+    padding: 4px 6px 4px 8px;
+    white-space: nowrap;
+    border-left: 2px solid var(--border-color, #1f2937);
+    flex-shrink: 0;
+}
+
+.mobile-nav-group:first-child .mobile-nav-group-label {
+    border-left: none;
+    padding-left: 0;
+}
+
+/* ============== MOBILE NAV UTILITIES ============== */
+.mobile-nav-utils {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding-left: 8px;
+    border-left: 2px solid var(--accent-cyan, #4a9eff);
+}
+
+/* Hide mobile nav utilities on desktop (desktop has .nav-utilities) */
+@media (min-width: 1024px) {
+    .mobile-nav-utils {
+        display: none;
+    }
+}
+
+/* ============== TABLET: WRAP MOBILE NAV ============== */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .mobile-nav-bar {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        justify-content: center;
+    }
+}
+
+/* Hide mobile nav bar on desktop */
+@media (min-width: 1024px) {
+    .mobile-nav-bar {
+        display: none;
+    }
+}
+
+/* ============== RESPONSIVE GRID UTILITIES ============== */
+.grid-responsive {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+/* 1 column base */
+.grid-1-2 {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+    .grid-1-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.grid-2-3 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 768px) {
+    .grid-2-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============== TYPOGRAPHY RESPONSIVE ============== */
+.text-responsive-xs { font-size: var(--font-xs); }
+.text-responsive-sm { font-size: var(--font-sm); }
+.text-responsive-base { font-size: var(--font-base); }
+.text-responsive-md { font-size: var(--font-md); }
+.text-responsive-lg { font-size: var(--font-lg); }
+.text-responsive-xl { font-size: var(--font-xl); }
+.text-responsive-2xl { font-size: var(--font-2xl); }
+
+/* Ensure minimum readable sizes for tiny text */
+.text-min-readable {
+    font-size: max(10px, var(--font-xs));
+}
+
+/* ============== MOBILE LAYOUT FIXES ============== */
+@media (max-width: 1023px) {
+    /* Fix main content to allow scrolling on mobile */
+    .app-shell .main-content {
+        height: auto;
+        min-height: calc(100dvh - var(--header-height) - var(--nav-height));
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .app-shell .sidebar {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .app-shell .output-panel {
+        min-height: 58vh;
+    }
+
+    .app-shell .output-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .app-shell .header-controls {
+        width: 100%;
+        gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+    }
+
+    .app-shell .header-controls .stats {
+        min-width: max-content;
+    }
+
+    /* Container should not clip content */
+    .app-shell .container {
+        overflow: visible;
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    /* Layout containers need to stack vertically on mobile */
+    /* overrides inline style - JS sets display via style attribute */
+    .app-shell .wifi-layout-container,
+    .app-shell .bt-layout-container {
+        flex-direction: column !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        padding: 10px !important;
+    }
+
+    /* Visual panels should be scrollable, not clipped */
+    .app-shell .wifi-visuals,
+    .app-shell .bt-visuals-column {
+        max-height: none;
+        overflow: visible;
+        margin-bottom: 15px;
+    }
+
+    /* Device lists should have reasonable height on mobile */
+    .app-shell .wifi-device-list,
+    .app-shell .bt-device-list {
+        max-height: 400px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Visual panels should stack in single column on mobile when visible */
+    .app-shell .wifi-visuals,
+    .app-shell .bt-visuals-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Stack aircraft visuals vertically on mobile when active */
+    #aircraftVisuals.active {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* APRS visuals stack vertically on mobile */
+    .app-shell #aprsVisuals {
+        flex-direction: column;
+    }
+
+    .app-shell .wifi-visual-panel {
+        grid-column: auto;
+    }
+
+    .app-shell .bt-main-area {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .app-shell .bt-side-panels {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .app-shell .bt-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .app-shell .bt-row-secondary {
+        padding-left: 0;
+        white-space: normal;
+    }
+
+    .app-shell .bt-row-actions {
+        padding-left: 0;
+        justify-content: flex-start;
+    }
+
+    .app-shell .bt-list-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ============== MOBILE MAP FIXES ============== */
+@media (max-width: 1023px) {
+    /* Aircraft map container needs explicit height on mobile */
+    .app-shell .aircraft-map-container {
+        height: 300px;
+        min-height: 300px;
+        width: 100%;
+    }
+
+    .app-shell #aircraftMap {
+        height: 100%;
+        width: 100%;
+        min-height: 250px;
+    }
+
+    /* APRS map container */
+    .app-shell #aprsMap {
+        min-height: 300px;
+        height: 300px;
+        width: 100%;
+    }
+
+    /* Satellite embed */
+    .app-shell .satellite-dashboard-embed {
+        height: 400px;
+        min-height: 400px;
+    }
+
+    /* Map panels should be full width */
+    /* overrides inline style - HTML sets grid-column via style attribute */
+    .wifi-visual-panel[style*="grid-column: span 2"] {
+        grid-column: auto !important;
+    }
+
+    /* Make map container full width when it has ACARS sidebar */
+    /* overrides inline style - HTML sets flex-direction via style attribute */
+    .wifi-visual-panel[style*="display: flex"][style*="gap: 0"] {
+        flex-direction: column !important;
+    }
+
+    /* ACARS sidebar should be below map on mobile */
+    .app-shell .main-acars-sidebar {
+        width: 100%;
+        max-width: none;
+        border-left: none;
+        border-top: 1px solid var(--border-color, #1f2937);
+    }
+
+    .app-shell .main-acars-sidebar.collapsed {
+        width: 100%;
+    }
+
+    .app-shell .main-acars-content {
+        max-height: 200px;
+    }
+}
+
+/* ============== LEAFLET MOBILE TOUCH FIXES ============== */
+.leaflet-container {
+    touch-action: pan-x pan-y;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.leaflet-control-zoom {
+    touch-action: manipulation;
+}
+
+.app-shell .leaflet-container .leaflet-control-zoom a {
+    min-width: var(--touch-min, 44px);
+    min-height: var(--touch-min, 44px);
+    line-height: var(--touch-min, 44px);
+    font-size: 18px;
+}
+
+/* ============== MOBILE HEADER STATS ============== */
+@media (max-width: 1023px) {
+    .app-shell .header-stats {
+        display: none;
+    }
+
+    /* Simplify header on mobile */
+    .app-shell header h1 {
+        font-size: 16px;
+    }
+
+    .app-shell header h1 .tagline {
+        display: none;
+    }
+
+    .app-shell header .version-badge {
+        display: none;
+    }
+
+    .app-shell header .active-mode-indicator {
+        font-size: 9px;
+        padding: 3px 8px;
+    }
+
+    .app-shell header .logo svg {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* ============== MOBILE MODE PANELS ============== */
+@media (max-width: 1023px) {
+    /* Mode panel grids should be single column */
+    .app-shell .data-grid,
+    .app-shell .stats-grid,
+    .app-shell .sensor-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Section headers should be easier to tap */
+    .app-shell .section h3 {
+        min-height: var(--touch-min);
+        padding: 12px;
+    }
+
+    /* Tables need horizontal scroll */
+    .message-table,
+    .sensor-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure messages list is scrollable */
+    #messageList,
+    #sensorGrid,
+    .aprs-list {
+        max-height: 60vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ============== WELCOME PAGE MOBILE ============== */
+@media (max-width: 767px) {
+    .app-shell .welcome-container {
+        padding: 15px;
+        max-width: 100%;
+    }
+
+    .app-shell .welcome-header {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px 10px;
+    }
+
+    .app-shell .welcome-logo svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .app-shell .welcome-title {
+        font-size: 1.2rem;
+    }
+
+    .app-shell .welcome-content {
+        grid-template-columns: 1fr;
+    }
+
+    .app-shell .mode-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .app-shell .mode-card {
+        padding: 12px 8px;
+    }
+
+    .app-shell .mode-icon {
+        font-size: 20px;
+    }
+
+    .app-shell .mode-name {
+        font-size: 11px;
+    }
+
+    .app-shell .mode-desc {
+        font-size: 9px;
+    }
+
+    .app-shell .changelog-release {
+        padding: 10px;
+    }
+}
+
+/* ============== TSCM MODE MOBILE ============== */
+@media (max-width: 1023px) {
+    .app-shell .tscm-layout {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .app-shell .tscm-spectrum-panel,
+    .app-shell .tscm-detection-panel {
+        width: 100%;
+        max-width: none;
+        height: auto;
+        min-height: 300px;
+    }
+}
+
+/* ============== LISTENING POST MOBILE ============== */
+@media (max-width: 1023px) {
+    .app-shell .radio-controls-section {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .app-shell .knobs-row {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .app-shell .radio-module-box {
+        width: 100%;
+    }
+}

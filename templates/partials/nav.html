@@ -1,0 +1,525 @@
+{#
+  Global Navigation Partial
+  Single source of truth for app navigation
+
+  Compatible with:
+  - index.html (uses switchMode() for mode panels)
+  - Dashboard pages (uses navigation links)
+
+  Variables:
+    - active_mode: Current active mode (e.g., 'pager', 'adsb', 'wifi')
+    - is_index_page: If true, Satellite/SSTV use switchMode (panel mode)
+                     If false (default), Satellite links to dashboard
+#}
+
+{% set is_index_page = is_index_page|default(false) %}
+
+{% macro mode_item(mode, label, icon_svg, href=None) -%}
+    {%- set is_active = 'active' if active_mode == mode else '' -%}
+    {%- if href %}
+    <a href="{{ href }}" class="mode-nav-btn {{ is_active }}" style="text-decoration: none;" data-mode="{{ mode }}" data-mode-label="{{ label }}" aria-label="{{ label }} mode">
+        <span class="nav-icon icon">{{ icon_svg | safe }}</span>
+        <span class="nav-label">{{ label }}</span>
+    </a>
+    {%- elif is_index_page %}
+    <button type="button" class="mode-nav-btn {{ is_active }}" data-mode="{{ mode }}" data-mode-label="{{ label }}" aria-label="{{ label }} mode" onclick="switchMode('{{ mode }}')">
+        <span class="nav-icon icon">{{ icon_svg | safe }}</span>
+        <span class="nav-label">{{ label }}</span>
+    </button>
+    {%- else %}
+    <a href="/?mode={{ mode }}" class="mode-nav-btn {{ is_active }}" style="text-decoration: none;" data-mode="{{ mode }}" data-mode-label="{{ label }}" aria-label="{{ label }} mode">
+        <span class="nav-icon icon">{{ icon_svg | safe }}</span>
+        <span class="nav-label">{{ label }}</span>
+    </a>
+    {%- endif %}
+{%- endmacro %}
+
+{% macro mobile_item(mode, label, icon_svg, href=None) -%}
+    {%- set is_active = 'active' if active_mode == mode else '' -%}
+    {%- if href %}
+    <a href="{{ href }}" class="mobile-nav-btn {{ is_active }}" style="text-decoration: none;" data-mode="{{ mode }}" data-mode-label="{{ label }}" aria-label="{{ label }} mode">
+        <span class="icon icon--sm">{{ icon_svg | safe }}</span> {{ label }}
+    </a>
+    {%- elif is_index_page %}
+    <button type="button" class="mobile-nav-btn {{ is_active }}" data-mode="{{ mode }}" data-mode-label="{{ label }}" aria-label="{{ label }} mode" onclick="switchMode('{{ mode }}')">
+        <span class="icon icon--sm">{{ icon_svg | safe }}</span> {{ label }}
+    </button>
+    {%- else %}
+    <a href="/?mode={{ mode }}" class="mobile-nav-btn {{ is_active }}" style="text-decoration: none;" data-mode="{{ mode }}" data-mode-label="{{ label }}" aria-label="{{ label }} mode">
+        <span class="icon icon--sm">{{ icon_svg | safe }}</span> {{ label }}
+    </a>
+    {%- endif %}
+{%- endmacro %}
+
+{# Desktop Navigation - uses existing CSS class names for compatibility #}
+<nav class="mode-nav" id="mainNav">
+    {# Signals Group #}
+    <div class="mode-nav-dropdown" data-group="signals">
+        <button type="button" class="mode-nav-dropdown-btn" aria-expanded="false"{% if is_index_page %} onclick="toggleNavDropdown('signals')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 3 16 3-8h4"/><path d="M22 12h-1"/><path d="M1 12h1"/></svg></span>
+            <span class="nav-label">Signals</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('pager', 'Pager', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>') }}
+            {{ mode_item('sensor', '433MHz', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg>') }}
+            {{ mode_item('rtlamr', 'Meters', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>') }}
+            {{ mode_item('subghz', 'SubGHz', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h6l3-9 3 18 3-9h5"/></svg>') }}
+            {{ mode_item('waterfall', 'Waterfall', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 3 16 3-8h4"/><path d="M2 18h20" opacity="0.4"/><path d="M2 21h20" opacity="0.2"/></svg>') }}
+            {{ mode_item('morse', 'Morse', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="5" y2="12"/><line x1="7" y1="12" x2="13" y2="12"/><line x1="15" y1="12" x2="18" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>') }}
+            {{ mode_item('ook', 'OOK Decoder', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3"/><path d="M19 12h3"/><rect x="5" y="8" width="4" height="8" rx="1"/><rect x="10" y="9" width="4" height="6" rx="1"/><rect x="15" y="7" width="4" height="10" rx="1"/></svg>') }}
+        </div>
+    </div>
+
+    {# Tracking Group #}
+    <div class="mode-nav-dropdown" data-group="tracking">
+        <button type="button" class="mode-nav-dropdown-btn" aria-expanded="false"{% if is_index_page %} onclick="toggleNavDropdown('tracking')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+            <span class="nav-label">Tracking</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('aprs', 'APRS', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>') }}
+            {{ mode_item('gps', 'GPS', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>') }}
+        </div>
+    </div>
+
+    {# Space Group #}
+    <div class="mode-nav-dropdown" data-group="space">
+        <button type="button" class="mode-nav-dropdown-btn" aria-expanded="false"{% if is_index_page %} onclick="toggleNavDropdown('space')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>
+            <span class="nav-label">Space</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('sstv', 'ISS SSTV', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M3 9h2"/><path d="M19 9h2"/><path d="M3 15h2"/><path d="M19 15h2"/></svg>') }}
+            {{ mode_item('weathersat', 'Weather Sat', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>') }}
+            {{ mode_item('wefax', 'WeFax', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>') }}
+            {{ mode_item('sstv_general', 'HF SSTV', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg>') }}
+            {{ mode_item('spaceweather', 'Space Weather', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>') }}
+            {{ mode_item('meteor', 'Meteor Scatter', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L2 22"/><path d="M18 2h4v4"/><circle cx="8" cy="16" r="4"/><path d="M16 6l-4 4"/></svg>') }}
+        </div>
+    </div>
+
+    {# Wireless Group #}
+    <div class="mode-nav-dropdown" data-group="wireless">
+        <button type="button" class="mode-nav-dropdown-btn" aria-expanded="false"{% if is_index_page %} onclick="toggleNavDropdown('wireless')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg></span>
+            <span class="nav-label">Wireless</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('wifi', 'WiFi', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>') }}
+            {{ mode_item('bluetooth', 'Bluetooth', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6.5 6.5 17.5 17.5 12 22 12 2 17.5 6.5 6.5 17.5"/></svg>') }}
+            {{ mode_item('bt_locate', 'BT Locate', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/><path d="M9.5 8.5l3 3 2-4-2 4-3 3"/></svg>') }}
+            {{ mode_item('wifi_locate', 'WF Locate', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="10" r="2"/><path d="M12 14v-2"/></svg>') }}
+            {{ mode_item('meshtastic', 'Meshtastic', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>') }}
+        </div>
+    </div>
+
+    {# Intel Group #}
+    <div class="mode-nav-dropdown" data-group="intel">
+        <button type="button" class="mode-nav-dropdown-btn" aria-expanded="false"{% if is_index_page %} onclick="toggleNavDropdown('intel')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            <span class="nav-label">Intel</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('tscm', 'TSCM', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') }}
+            {{ mode_item('cuas', 'C-UAS', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>') }}
+            {{ mode_item('sigint', 'SIGINT', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>') }}
+            {{ mode_item('spystations', 'Spy Stations', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg>') }}
+            {{ mode_item('websdr', 'WebSDR', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>') }}
+        </div>
+    </div>
+
+    {# System Group #}
+    <div class="mode-nav-dropdown" data-group="system">
+        <button type="button" class="mode-nav-dropdown-btn" aria-expanded="false"{% if is_index_page %} onclick="toggleNavDropdown('system')"{% endif %}>
+            <span class="nav-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></span>
+            <span class="nav-label">System</span>
+            <span class="dropdown-arrow icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+        </button>
+
+        <div class="mode-nav-dropdown-menu">
+            {{ mode_item('system', 'Health', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>') }}
+        </div>
+    </div>
+
+    {# Nav Utilities (clock, SSE status, theme, tools) #}
+    <div class="nav-utilities">
+        <span class="status-dot inactive" id="sseStatusDot" data-tooltip="No active streams" aria-label="Stream connection status"></span>
+        <div class="nav-clock">
+            <span class="utc-label">UTC</span>
+            <span class="utc-time" id="headerUtcTime">--:--:--</span>
+        </div>
+        <div class="nav-divider"></div>
+        <a href="/" class="nav-dashboard-btn" title="Return to Main Dashboard" style="text-decoration: none;">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <span class="nav-label">Main Dashboard</span>
+        </a>
+        <div class="nav-divider"></div>
+        <div class="nav-tools">
+            <button type="button" class="nav-tool-btn" onclick="toggleAnimations()" title="Toggle Motion" aria-label="Toggle motion">
+                <span class="icon-effects-on icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+                <span class="icon-effects-off icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></span>
+            </button>
+            <button type="button" class="nav-tool-btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme" aria-label="Toggle theme">
+                <span class="icon-moon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+                <span class="icon-sun icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+            </button>
+            <a href="/controller/monitor" class="nav-tool-btn" title="Network Monitor - Multi-Agent View" style="text-decoration: none;">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            </a>
+            <a href="/controller/manage" class="nav-tool-btn" title="Manage Remote Agents" style="text-decoration: none;">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></span>
+            </a>
+            <button type="button" class="nav-tool-btn" onclick="showSettings()" title="Settings" aria-label="Open settings">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+            </button>
+            <button type="button" class="nav-tool-btn" id="voiceMuteBtn" onclick="window.VoiceAlerts && VoiceAlerts.toggleMute()" title="Toggle voice alerts" aria-label="Toggle voice alerts">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+            </button>
+            <button type="button" class="nav-tool-btn" onclick="window.CheatSheets && CheatSheets.showForCurrentMode()" title="Mode cheat sheet (Alt+C)" aria-label="Mode cheat sheet">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+            </button>
+            <button type="button" class="nav-tool-btn" onclick="window.KeyboardShortcuts && KeyboardShortcuts.showHelp()" title="Keyboard shortcuts (Alt+K)" aria-label="Keyboard shortcuts">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg></span>
+            </button>
+            <button type="button" class="nav-tool-btn" onclick="showHelp()" title="Help & Documentation" aria-label="Open help">?</button>
+            <button type="button" class="nav-tool-btn" onclick="logout(event)" title="Logout" aria-label="Logout">
+                <span class="power-icon icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+{# Mobile Navigation Bar #}
+<nav class="mobile-nav-bar" id="mobileNavBar">
+    {# Signals Group #}
+    <div class="mobile-nav-group" data-group="signals">
+        <span class="mobile-nav-group-label">SIG</span>
+        {{ mobile_item('pager', 'Pager', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="14" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>') }}
+        {{ mobile_item('sensor', '433MHz', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"/></svg>') }}
+        {{ mobile_item('rtlamr', 'Meters', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>') }}
+        {{ mobile_item('subghz', 'SubGHz', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h6l3-9 3 18 3-9h5"/></svg>') }}
+        {{ mobile_item('waterfall', 'Waterfall', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h4l3-8 3 16 3-8h4"/></svg>') }}
+        {{ mobile_item('morse', 'Morse', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="12" x2="5" y2="12"/><line x1="7" y1="12" x2="13" y2="12"/><line x1="15" y1="12" x2="18" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>') }}
+        {{ mobile_item('ook', 'OOK', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h3"/><path d="M19 12h3"/><rect x="5" y="8" width="4" height="8" rx="1"/><rect x="10" y="9" width="4" height="6" rx="1"/><rect x="15" y="7" width="4" height="10" rx="1"/></svg>') }}
+    </div>
+
+    {# Tracking Group #}
+    <div class="mobile-nav-group" data-group="tracking">
+        <span class="mobile-nav-group-label">TRK</span>
+        {{ mobile_item('aprs', 'APRS', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>') }}
+        {{ mobile_item('gps', 'GPS', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>') }}
+    </div>
+
+    {# Space Group #}
+    <div class="mobile-nav-group" data-group="space">
+        <span class="mobile-nav-group-label">SPC</span>
+        {{ mobile_item('sstv', 'SSTV', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/></svg>') }}
+        {{ mobile_item('weathersat', 'WxSat', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>') }}
+        {{ mobile_item('wefax', 'WeFax', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>') }}
+        {{ mobile_item('sstv_general', 'HF SSTV', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/></svg>') }}
+        {{ mobile_item('spaceweather', 'SpaceWx', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>') }}
+        {{ mobile_item('meteor', 'Meteor', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L2 22"/><path d="M18 2h4v4"/><circle cx="8" cy="16" r="4"/><path d="M16 6l-4 4"/></svg>') }}
+    </div>
+
+    {# Wireless Group #}
+    <div class="mobile-nav-group" data-group="wireless">
+        <span class="mobile-nav-group-label">WLS</span>
+        {{ mobile_item('wifi', 'WiFi', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg>') }}
+        {{ mobile_item('bluetooth', 'BT', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6.5 6.5 17.5 17.5 12 22 12 2 17.5 6.5 6.5 17.5"/></svg>') }}
+        {{ mobile_item('bt_locate', 'Locate', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/></svg>') }}
+        {{ mobile_item('wifi_locate', 'WF Loc', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/><circle cx="12" cy="10" r="2"/></svg>') }}
+        {{ mobile_item('meshtastic', 'Mesh', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>') }}
+    </div>
+
+    {# Intel Group #}
+    <div class="mobile-nav-group" data-group="intel">
+        <span class="mobile-nav-group-label">INT</span>
+        {{ mobile_item('tscm', 'TSCM', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') }}
+        {{ mobile_item('cuas', 'C-UAS', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>') }}
+        {{ mobile_item('sigint', 'SIGINT', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>') }}
+        {{ mobile_item('spystations', 'Spy', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><circle cx="12" cy="12" r="2"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg>') }}
+        {{ mobile_item('websdr', 'WebSDR', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>') }}
+    </div>
+
+    {# System Group #}
+    <div class="mobile-nav-group" data-group="system">
+        <span class="mobile-nav-group-label">SYS</span>
+        {{ mobile_item('system', 'System', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>') }}
+    </div>
+
+    {# Utility Buttons (theme, settings, help) #}
+    <div class="mobile-nav-utils">
+        <button type="button" class="mobile-nav-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+            <span class="icon icon--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+        </button>
+        <button type="button" class="mobile-nav-btn" onclick="showSettings()" aria-label="Settings" title="Settings">
+            <span class="icon icon--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        </button>
+        <button type="button" class="mobile-nav-btn" onclick="showHelp()" aria-label="Help" title="Help">?</button>
+    </div>
+</nav>
+
+{# JavaScript stub for pages that don't have switchMode defined #}
+<script>
+    (function () {
+        const NAV_PERF_KEY = 'intercept_nav_perf_v1';
+        const MAX_NAV_AGE_MS = 30000;
+
+        function parseNavPerf(raw) {
+            if (!raw) return null;
+            try {
+                return JSON.parse(raw);
+            } catch (_) {
+                return null;
+            }
+        }
+
+        if (!window.InterceptNavPerf) {
+            window.InterceptNavPerf = {
+                markStart(meta = {}) {
+                    try {
+                        const payload = {
+                            startedAtEpochMs: Date.now(),
+                            sourcePath: window.location.pathname + window.location.search,
+                            sourceMode: document.body?.getAttribute('data-mode') || null,
+                            ...meta,
+                        };
+                        sessionStorage.setItem(NAV_PERF_KEY, JSON.stringify(payload));
+                    } catch (_) {
+                        // Ignore storage errors in private/incognito mode.
+                    }
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const payload = parseNavPerf(sessionStorage.getItem(NAV_PERF_KEY));
+            if (!payload || !payload.targetPath) return;
+
+            const ageMs = Date.now() - (payload.startedAtEpochMs || 0);
+            if (ageMs < 0 || ageMs > MAX_NAV_AGE_MS) {
+                try { sessionStorage.removeItem(NAV_PERF_KEY); } catch (_) { }
+                return;
+            }
+
+            if (window.location.pathname !== payload.targetPath) return;
+
+            console.info(
+                `[Perf] Nav ${payload.sourcePath || '(unknown)'} -> ${payload.targetPath} in ${Math.round(ageMs)}ms`,
+                {
+                    trigger: payload.trigger || 'unknown',
+                    sourceMode: payload.sourceMode || null,
+                    activeScans: payload.activeScans || null,
+                }
+            );
+
+            try { sessionStorage.removeItem(NAV_PERF_KEY); } catch (_) { }
+        });
+    })();
+
+    // Ensure navigation functions exist (for dashboard pages that don't have the full JS)
+    if (typeof switchMode === 'undefined') {
+        window.switchMode = function(mode) {
+            // On dashboard pages, navigate to main page with mode param
+            window.location.href = '/?mode=' + mode;
+        };
+    }
+
+    if (typeof toggleNavDropdown === 'undefined') {
+        window.toggleNavDropdown = function(groupName) {
+            const dropdown = document.querySelector(`.mode-nav-dropdown[data-group="${groupName}"]`);
+            if (!dropdown) return;
+
+            // Close other dropdowns
+            document.querySelectorAll('.mode-nav-dropdown.open').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('open');
+                    const btn = d.querySelector('.mode-nav-dropdown-btn');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            const isOpen = dropdown.classList.toggle('open');
+            const btn = dropdown.querySelector('.mode-nav-dropdown-btn');
+            if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+            // Focus first menu item when opening
+            if (isOpen) {
+                const firstItem = dropdown.querySelector('.mode-nav-dropdown-menu button, .mode-nav-dropdown-menu a');
+                if (firstItem) firstItem.focus();
+            }
+        };
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.mode-nav-dropdown')) {
+                document.querySelectorAll('.mode-nav-dropdown.open').forEach(d => {
+                    d.classList.remove('open');
+                    const btn = d.querySelector('.mode-nav-dropdown-btn');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+
+        // Keyboard support for dropdown buttons and menu items
+        document.addEventListener('keydown', function(e) {
+            const dropdown = e.target.closest('.mode-nav-dropdown');
+            if (!dropdown) return;
+
+            const btn = dropdown.querySelector('.mode-nav-dropdown-btn');
+            const menu = dropdown.querySelector('.mode-nav-dropdown-menu');
+            if (!menu) return;
+            const items = Array.from(menu.querySelectorAll('button, a'));
+
+            if (e.target === btn || e.target.closest('.mode-nav-dropdown-btn')) {
+                // On the dropdown trigger button
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const group = dropdown.getAttribute('data-group');
+                    if (group) toggleNavDropdown(group);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (!dropdown.classList.contains('open')) {
+                        const group = dropdown.getAttribute('data-group');
+                        if (group) toggleNavDropdown(group);
+                    }
+                    if (items.length) items[0].focus();
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.remove('open');
+                    if (btn) {
+                        btn.setAttribute('aria-expanded', 'false');
+                        btn.focus();
+                    }
+                }
+            } else if (items.includes(e.target)) {
+                // Inside the dropdown menu
+                const idx = items.indexOf(e.target);
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    items[(idx + 1) % items.length].focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    items[(idx - 1 + items.length) % items.length].focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    dropdown.classList.remove('open');
+                    if (btn) {
+                        btn.setAttribute('aria-expanded', 'false');
+                        btn.focus();
+                    }
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    // Default behavior (click) is fine for links/buttons
+                }
+            }
+        });
+    }
+
+    if (typeof toggleAnimations === 'undefined') {
+        window.toggleAnimations = function() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-animations') || 'on';
+            const next = current === 'on' ? 'off' : 'on';
+            html.setAttribute('data-animations', next);
+            localStorage.setItem('intercept-animations', next);
+            localStorage.removeItem('animations');
+        };
+    }
+
+    if (typeof toggleTheme === 'undefined') {
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('intercept-theme', next);
+        };
+    }
+
+    if (typeof showSettings === 'undefined') {
+        window.showSettings = function() {
+            // Try to open settings modal if it exists on this page
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                modal.classList.add('active');
+                if (typeof Settings !== 'undefined' && Settings.init) {
+                    Settings.init().then(() => {
+                        if (Settings.checkAssets) Settings.checkAssets();
+                    });
+                }
+            } else {
+                // Fall back to navigating to main page settings
+                window.location.href = '/?settings=1';
+            }
+        };
+    }
+
+    if (typeof hideSettings === 'undefined') {
+        window.hideSettings = function() {
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        };
+    }
+
+    // showHelp is defined by the help-modal.html partial
+
+    if (typeof logout === 'undefined') {
+        window.logout = async function(e) {
+            if (e) e.preventDefault();
+            const confirmed = await AppFeedback.confirmAction({
+                title: 'Logout',
+                message: 'Are you sure you want to logout?',
+                confirmLabel: 'Logout',
+                confirmClass: 'btn-danger'
+            });
+            if (confirmed) {
+                window.location.href = '/logout';
+            }
+        };
+    }
+
+    // Apply saved preferences and start clock
+    (function() {
+        const savedTheme = localStorage.getItem('intercept-theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        const legacyAnimations = localStorage.getItem('animations');
+        const savedAnimations = localStorage.getItem('intercept-animations') || legacyAnimations || 'off';
+        if (legacyAnimations && !localStorage.getItem('intercept-animations')) {
+            localStorage.setItem('intercept-animations', legacyAnimations);
+            localStorage.removeItem('animations');
+        }
+        if (!localStorage.getItem('intercept-animations')) {
+            localStorage.setItem('intercept-animations', savedAnimations);
+        }
+        if (savedAnimations) {
+            document.documentElement.setAttribute('data-animations', savedAnimations);
+        }
+
+        // UTC Clock update (if not already defined by parent page)
+        if (typeof window._navClockStarted === 'undefined') {
+            window._navClockStarted = true;
+            function updateNavUtcClock() {
+                const now = new Date();
+                const utc = now.toISOString().slice(11, 19);
+                const el = document.getElementById('headerUtcTime');
+                if (el) el.textContent = utc;
+            }
+            setInterval(updateNavUtcClock, 1000);
+            updateNavUtcClock();
+        }
+    })();
+</script>

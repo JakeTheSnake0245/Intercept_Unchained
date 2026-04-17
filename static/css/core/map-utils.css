@@ -1,0 +1,141 @@
+/* ============================================================
+   MAP UTILS — Tactical overlay styles
+   Used by all map-using pages via map-utils.js
+   ============================================================ */
+
+/* --- HUD panel base ---
+   Absolutely positioned dark-glass panels over the Leaflet map container.
+   The map container already has position:relative set by Leaflet.           */
+
+.map-hud-panel {
+    position: absolute;
+    z-index: 1000;
+    padding: 6px 10px;
+    background: rgba(7, 9, 14, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(74, 163, 255, 0.18);
+    border-radius: 4px;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    color: var(--text-secondary, #8ba0b8);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+}
+
+/* Top-left: mode name + contact count */
+.map-hud-tl {
+    top: 10px;
+    left: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.map-hud-mode {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim, #5a7080);
+}
+
+.map-hud-count {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent-cyan, #4aa3ff);
+    line-height: 1;
+}
+
+/* Top-right: UTC clock + status dot */
+.map-hud-tr {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+}
+
+.map-hud-clock {
+    color: var(--text-secondary, #8ba0b8);
+    font-size: 11px;
+}
+
+.map-hud-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-dim, #5a7080);
+    flex-shrink: 0;
+}
+
+.map-hud-dot.online {
+    background: var(--status-online, #38c180);
+    box-shadow: 0 0 4px var(--status-online, #38c180);
+}
+
+.map-hud-dot.offline {
+    background: var(--status-error, #e85d5d);
+}
+
+/* --- Observer reticle ---
+   Rendered as a Leaflet divIcon; no extra CSS needed beyond pointer-events. */
+
+.map-reticle {
+    pointer-events: none !important;
+    background: none !important;
+    border: none !important;
+}
+
+/* --- Range ring labels --- */
+
+.map-range-label {
+    pointer-events: none !important;
+    background: none !important;
+    border: none !important;
+}
+
+.map-range-label span {
+    display: inline-block;
+    background: rgba(7, 9, 14, 0.7);
+    color: rgba(74, 163, 255, 0.7);
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+/* --- Dark glass popup ---
+   Applied via MapUtils.glassPopupOptions() className.                        */
+
+.map-glass-popup .leaflet-popup-content-wrapper {
+    background: var(--bg-elevated, #161d28) !important;
+    border: 1px solid var(--border-color, rgba(74,163,255,0.15)) !important;
+    border-radius: 6px !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    padding: 0;
+}
+
+.map-glass-popup .leaflet-popup-content {
+    margin: 0;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    color: var(--text-primary, #c8d8e8);
+}
+
+.map-glass-popup .leaflet-popup-tip-container {
+    display: none;
+}
+
+.map-glass-popup .leaflet-popup-close-button {
+    color: var(--text-dim, #5a7080);
+    font-size: 16px;
+    padding: 4px 6px;
+}
+
+.map-glass-popup .leaflet-popup-close-button:hover {
+    color: var(--text-primary, #c8d8e8);
+}

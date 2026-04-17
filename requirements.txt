@@ -1,0 +1,56 @@
+# Core dependencies
+flask>=3.0.0
+flask-wtf>=1.2.0
+flask-compress>=1.15
+flask-limiter>=2.5.4
+requests>=2.28.0
+Werkzeug>=3.1.5
+
+# ADS-B history (optional - only needed for Postgres persistence)
+psycopg2-binary>=2.9.9
+
+# BLE scanning with manufacturer data detection (optional - for TSCM)
+bleak>=0.21.0
+
+# Satellite tracking (optional - only needed for satellite features)
+skyfield>=1.45
+
+# DSC decoding and SSTV decoding (DSP pipeline)
+scipy>=1.10.0
+numpy>=1.24.0
+
+# SSTV image output (optional - needed for SSTV image decoding)
+Pillow>=9.0.0
+
+# GPS dongle support (optional - only needed for USB GPS receivers)
+pyserial>=3.5
+
+# Meshtastic mesh network support (optional - only needed for Meshtastic features)
+meshtastic>=2.0.0
+
+# Deauthentication attack detection (optional - for WiFi TSCM)
+scapy>=2.4.5
+
+# QR code generation for Meshtastic channels (optional)
+qrcode[pil]>=7.4
+
+# BLE RPA resolution for BT Locate (optional - for SAR device tracking)
+cryptography>=41.0.0
+
+# Development dependencies (install with: pip install -r requirements-dev.txt)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# ruff>=0.1.0
+# black>=23.0.0
+# mypy>=1.0.0
+# WebSocket support for in-app audio streaming (KiwiSDR, Listening Post)
+flask-sock
+simple-websocket>=0.5.1
+websocket-client>=1.6.0
+
+# System health monitoring (optional - graceful fallback if unavailable)
+psutil>=5.9.0
+
+# Production WSGI server (optional - falls back to Flask dev server)
+gunicorn>=21.2.0
+gevent>=23.9.0

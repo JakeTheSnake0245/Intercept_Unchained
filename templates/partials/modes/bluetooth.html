@@ -1,0 +1,75 @@
+<!-- BLUETOOTH MODE -->
+                <div id="bluetoothMode" class="mode-content">
+                    <div class="section">
+                        <h3>Scanner Configuration</h3>
+                        <!-- Populated by JavaScript with capability warnings -->
+                        <div id="btCapabilityStatus" style="display: none; margin-bottom: 8px;"></div>
+
+                        <!-- Show All Agents option (visible when agents are available) -->
+                        <div id="btShowAllAgentsContainer" style="display: none; margin-bottom: 8px;">
+                            <label class="inline-checkbox" style="font-size: 10px;">
+                                <input type="checkbox" id="btShowAllAgents" onchange="if(typeof BluetoothMode !== 'undefined') BluetoothMode.toggleShowAllAgents(this.checked)">
+                                Show devices from all agents
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="btAdapterSelect">Adapter</label>
+                            <select id="btAdapterSelect">
+                                <option value="">Detecting adapters...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="btScanMode">Scan Mode</label>
+                            <select id="btScanMode">
+                                <option value="auto">Auto (Recommended)</option>
+                                <option value="bleak">Bleak Library</option>
+                                <option value="hcitool">hcitool (Linux)</option>
+                                <option value="bluetoothctl">bluetoothctl (Linux)</option>
+                                <option value="ubertooth" id="btScanModeUbertooth" style="display:none;">Ubertooth One</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="btTransport">Transport</label>
+                            <select id="btTransport">
+                                <option value="auto">Auto (BLE + Classic)</option>
+                                <option value="le">BLE Only</option>
+                                <option value="br_edr">Classic Only</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="btScanDuration">Duration (seconds, 0 = continuous)</label>
+                            <input type="number" id="btScanDuration" value="0" min="0" max="300" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="btMinRssi">Min RSSI Filter (dBm)</label>
+                            <input type="number" id="btMinRssi" value="-100" min="-100" max="-20" placeholder="-100">
+                        </div>
+                        <button class="preset-btn" onclick="btCheckCapabilities()" style="width: 100%;">
+                            Check Capabilities
+                        </button>
+                    </div>
+
+                    <!-- Message Container for status cards -->
+                    <div id="btMessageContainer"></div>
+                    <div id="btBaselineStatus" style="margin-top: 6px; font-size: 10px; color: var(--text-dim);">No baseline</div>
+
+                    <button class="run-btn" id="startBtBtn" onclick="btStartScan()">
+                        Start Scanning
+                    </button>
+                    <button class="stop-btn" id="stopBtBtn" onclick="btStopScan()" style="display: none;">
+                        Stop Scanning
+                    </button>
+
+                    <div class="section">
+                        <h3>Export</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="preset-btn" onclick="btExport('csv')" style="flex: 1;">
+                                Export CSV
+                            </button>
+                            <button class="preset-btn" onclick="btExport('json')" style="flex: 1;">
+                                Export JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>

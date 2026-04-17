@@ -1,0 +1,200 @@
+<!-- TSCM MODE (Counter-Surveillance) -->
+                <div id="tscmMode" class="mode-content">
+                    <!-- Configuration -->
+                    <div class="section">
+                        <h3>TSCM Sweep <span style="font-size: 9px; font-weight: normal; background: var(--accent-orange); color: #000; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Alpha</span></h3>
+
+                        <div class="form-group">
+                            <label>Sweep Type</label>
+                            <select id="tscmSweepType" onchange="document.getElementById('tscmCustomRangeControls').style.display = this.value === 'custom' ? 'block' : 'none'">
+                                <option value="quick">Quick Scan (2 min)</option>
+                                <option value="standard" selected>Standard (5 min)</option>
+                                <option value="full">Full Sweep (15 min)</option>
+                                <option value="wireless_cameras">Wireless Cameras</option>
+                                <option value="body_worn">Body-Worn Devices</option>
+                                <option value="gps_trackers">GPS Trackers</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                            <div id="tscmCustomRangeControls" style="display: none; margin-top: 8px;">
+                                <div style="display: flex; gap: 8px;">
+                                    <div style="flex: 1;">
+                                        <label style="font-size: 10px; color: var(--text-dim);">Start (MHz)</label>
+                                        <input type="number" id="tscmCustomStartMhz" value="400" min="1" max="6000" step="1">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label style="font-size: 10px; color: var(--text-dim);">End (MHz)</label>
+                                        <input type="number" id="tscmCustomEndMhz" value="500" min="1" max="6000" step="1">
+                                    </div>
+                                </div>
+                                <p class="info-text" style="font-size: 10px; color: var(--text-dim); margin-top: 3px;">Step: 100 kHz. Duration: ~5 min.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Compare Against</label>
+                            <select id="tscmBaselineSelect">
+                                <option value="">No Baseline</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="inline-checkbox">
+                                <input type="checkbox" id="tscmVerboseResults">
+                                Verbose results (store full device details)
+                            </label>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 12px;">
+                            <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 8px; color: var(--text-secondary);">Scan Sources</label>
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <label class="inline-checkbox">
+                                    <input type="checkbox" id="tscmWifiEnabled" checked>
+                                    WiFi
+                                </label>
+                                <select id="tscmWifiInterface" style="margin-top: 4px;">
+                                    <option value="">Select WiFi interface...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <label class="inline-checkbox">
+                                    <input type="checkbox" id="tscmBtEnabled" checked>
+                                    Bluetooth
+                                </label>
+                                <select id="tscmBtInterface" style="margin-top: 4px;">
+                                    <option value="">Select Bluetooth adapter...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 8px;">
+                                <label class="inline-checkbox">
+                                    <input type="checkbox" id="tscmRfEnabled" checked>
+                                    RF/SDR
+                                </label>
+                                <select id="tscmSdrDevice" style="margin-top: 4px;">
+                                    <option value="">Select SDR device...</option>
+                                </select>
+                            </div>
+                            <button class="preset-btn" onclick="refreshTscmDevices()" style="width: 100%; margin-top: 8px; font-size: 10px;">
+                                <span class="icon icon-refresh icon--sm" style="margin-right: 4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>Refresh Devices
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Futuristic Scanner Progress -->
+                    <div id="tscmProgress" class="tscm-scanner-progress" style="display: none; margin-top: 12px;">
+                        <div class="scanner-ring">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="scanner-track" cx="50" cy="50" r="45" />
+                                <circle class="scanner-progress" id="tscmScannerCircle" cx="50" cy="50" r="45" />
+                                <line class="scanner-sweep" x1="50" y1="50" x2="50" y2="8" />
+                            </svg>
+                            <div class="scanner-center">
+                                <span class="scanner-percent" id="tscmProgressPercent">0%</span>
+                            </div>
+                        </div>
+                        <div class="scanner-info">
+                            <div class="scanner-status" id="tscmProgressLabel">INITIALIZING</div>
+                            <div class="scanner-devices">
+                                <span class="device-indicator-icon" id="tscmWifiIndicator" title="WiFi"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg></span></span>
+                                <span class="device-indicator-icon" id="tscmBtIndicator" title="Bluetooth"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6.5 6.5 17.5 17.5 12 22 12 2 17.5 6.5 6.5 17.5"/></svg></span></span>
+                                <span class="device-indicator-icon" id="tscmRfIndicator" title="RF/SDR"><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12c0-3 2-6 5-6s4 3 5 6c1 3 2 6 5 6s5-3 5-6"/></svg></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="preset-btn" id="tscmReportBtn" onclick="generateTscmReport()" style="display: none; width: 100%; margin-top: 8px; background: var(--accent-cyan); color: #000; font-weight: 600;">
+                        Generate Report
+                    </button>
+
+                    <!-- Export Options -->
+                    <div id="tscmExportSection" style="display: none; margin-top: 8px;">
+                        <div style="display: flex; gap: 6px;">
+                            <button class="preset-btn" onclick="tscmDownloadPdf()" style="flex: 1; font-size: 10px;">
+                                <span class="icon icon-export icon--sm" style="margin-right: 2px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>PDF
+                            </button>
+                            <button class="preset-btn" onclick="tscmDownloadAnnex('json')" style="flex: 1; font-size: 10px;">
+                                <span class="icon icon-export icon--sm" style="margin-right: 2px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>JSON
+                            </button>
+                            <button class="preset-btn" onclick="tscmDownloadAnnex('csv')" style="flex: 1; font-size: 10px;">
+                                <span class="icon icon-export icon--sm" style="margin-right: 2px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Advanced -->
+                    <div class="section">
+                        <h3>Advanced</h3>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Baseline Recording</label>
+                            <div class="form-group">
+                                <input type="text" id="tscmBaselineName" placeholder="Baseline name...">
+                            </div>
+                            <button class="run-btn" id="tscmRecordBaselineBtn" onclick="tscmRecordBaseline()" style="width: 100%; padding: 8px;">
+                                Record New Baseline
+                            </button>
+                            <button class="stop-btn" id="tscmStopBaselineBtn" onclick="tscmStopBaseline()" style="width: 100%; padding: 8px; display: none;">
+                                Stop Recording
+                            </button>
+                            <div id="tscmBaselineStatus" style="margin-top: 8px; font-size: 11px; color: var(--text-muted);"></div>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--border-color); padding-top: 12px;">
+                            <label style="display: block; font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">Meeting Window</label>
+                            <div id="tscmMeetingStatus" style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+                                No active meeting
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="tscmMeetingName" placeholder="Meeting name (optional)">
+                            </div>
+                            <button class="run-btn" id="tscmStartMeetingBtn" onclick="tscmStartMeeting()" style="width: 100%; padding: 8px;">
+                                Start Meeting Window
+                            </button>
+                            <button class="stop-btn" id="tscmEndMeetingBtn" onclick="tscmEndMeeting()" style="width: 100%; padding: 8px; display: none;">
+                                End Meeting Window
+                            </button>
+                            <button class="preset-btn" id="tscmMeetingSummaryBtn" onclick="tscmShowMeetingSummary()" style="width: 100%; padding: 8px; margin-top: 6px; display: none;">
+                                View Meeting Summary
+                            </button>
+                            <div style="font-size: 9px; color: var(--text-muted); margin-top: 4px;">
+                                Devices detected during meetings get flagged
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tools -->
+                    <div class="section">
+                        <h3>Tools</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            <button class="preset-btn" onclick="tscmShowCapabilities()" style="font-size: 10px; padding: 8px;">
+                                Capabilities
+                            </button>
+                            <button class="preset-btn" onclick="tscmShowWifiIndicators()" style="font-size: 10px; padding: 8px;">
+                                WiFi Indicators
+                            </button>
+                            <button class="preset-btn" onclick="tscmShowKnownDevices()" style="font-size: 10px; padding: 8px;">
+                                Known Devices
+                            </button>
+                            <button class="preset-btn" onclick="tscmShowCases()" style="font-size: 10px; padding: 8px;">
+                                Cases
+                            </button>
+                            <button class="preset-btn" onclick="tscmShowSchedules()" style="font-size: 10px; padding: 8px;">
+                                Schedules
+                            </button>
+                            <button class="preset-btn" onclick="tscmShowPlaybooks()" style="font-size: 10px; padding: 8px;">
+                                Playbooks
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Device Warnings -->
+                    <div id="tscmDeviceWarnings" style="display: none; margin-top: 8px; padding: 8px; background: rgba(255,153,51,0.1); border: 1px solid rgba(255,153,51,0.3); border-radius: 4px;"></div>
+
+                    <div class="mode-actions-bottom">
+                        <button class="run-btn" id="startTscmBtn" onclick="startTscmSweep()">
+                            Start Sweep
+                        </button>
+                        <button class="stop-btn" id="stopTscmBtn" onclick="stopTscmSweep()" style="display: none;">
+                            Stop Sweep
+                        </button>
+                    </div>
+                </div>

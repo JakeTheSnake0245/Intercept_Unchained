@@ -1,0 +1,575 @@
+<!-- Settings Modal -->
+<div id="settingsModal" class="settings-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="settingsModalTitle" onclick="if(event.target === this) hideSettings()">
+    <div class="settings-content" tabindex="-1">
+        <div class="settings-header">
+            <h2 id="settingsModalTitle">
+                <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                Settings
+            </h2>
+            <button type="button" class="settings-close" onclick="hideSettings()" aria-label="Close settings">&times;</button>
+        </div>
+
+        <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+            <button type="button" class="settings-tab active" data-tab="offline" onclick="switchSettingsTab('offline')" role="tab" aria-controls="settings-offline" aria-selected="true">Offline</button>
+            <button type="button" class="settings-tab" data-tab="location" onclick="switchSettingsTab('location')" role="tab" aria-controls="settings-location" aria-selected="false">Location</button>
+            <button type="button" class="settings-tab" data-tab="display" onclick="switchSettingsTab('display')" role="tab" aria-controls="settings-display" aria-selected="false">Display</button>
+            <button type="button" class="settings-tab" data-tab="updates" onclick="switchSettingsTab('updates')" role="tab" aria-controls="settings-updates" aria-selected="false">Updates</button>
+            <button type="button" class="settings-tab" data-tab="tools" onclick="switchSettingsTab('tools')" role="tab" aria-controls="settings-tools" aria-selected="false">Tools</button>
+            <button type="button" class="settings-tab" data-tab="alerts" onclick="switchSettingsTab('alerts')" role="tab" aria-controls="settings-alerts" aria-selected="false">Alerts</button>
+            <button type="button" class="settings-tab" data-tab="recording" onclick="switchSettingsTab('recording')" role="tab" aria-controls="settings-recording" aria-selected="false">Recording</button>
+            <button type="button" class="settings-tab" data-tab="about" onclick="switchSettingsTab('about')" role="tab" aria-controls="settings-about" aria-selected="false">About</button>
+        </div>
+
+        <!-- Offline Section -->
+        <div id="settings-offline" class="settings-section active" role="tabpanel">
+            <div class="settings-group">
+                <div class="settings-group-title">Offline Mode</div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Enable Offline Mode</span>
+                        <span class="settings-label-desc">Use local assets instead of CDN</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="offlineEnabled" onchange="Settings.toggleOfflineMode(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Asset Sources</div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">JavaScript/CSS Libraries</span>
+                        <span class="settings-label-desc">Leaflet, Chart.js</span>
+                    </div>
+                    <select id="assetsSource" class="settings-select" onchange="Settings.setAssetSource(this.value)">
+                        <option value="cdn">CDN (Online)</option>
+                        <option value="local">Local</option>
+                    </select>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Web Fonts</span>
+                        <span class="settings-label-desc">Roboto Condensed</span>
+                    </div>
+                    <select id="fontsSource" class="settings-select" onchange="Settings.setFontsSource(this.value)">
+                        <option value="cdn">Google Fonts (Online)</option>
+                        <option value="local">Local</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Map Tiles</div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Tile Provider</span>
+                        <span class="settings-label-desc">Map background imagery</span>
+                    </div>
+                    <select id="tileProvider" class="settings-select" onchange="Settings.setTileProvider(this.value)">
+                        <option value="cartodb_dark_cyan">Intercept Default</option>
+                        <option value="cartodb_dark">CartoDB Dark</option>
+                        <option value="openstreetmap">OpenStreetMap</option>
+                        <option value="cartodb_light">CartoDB Positron</option>
+                        <option value="esri_world">ESRI World Imagery</option>
+                        <option value="stadia_dark">Stadia Alidade Dark</option>
+                        <option value="tactical">Stadia Tactical (minimal)</option>
+                        <option value="custom">Custom URL</option>
+                    </select>
+                </div>
+
+                <div class="settings-row custom-url-row" id="customTileUrlRow" style="display: none;">
+                    <div class="settings-label" style="width: 100%;">
+                        <span class="settings-label-text">Custom Tile URL</span>
+                        <span class="settings-label-desc">e.g., http://localhost:8080/{z}/{x}/{y}.png</span>
+                        <input type="text" id="customTileUrl" class="settings-input"
+                               placeholder="http://tile-server/{z}/{x}/{y}.png"
+                               onchange="Settings.setCustomTileUrl(this.value)">
+                    </div>
+                </div>
+                <div class="settings-row" id="stadiaKeyRow" style="display: none;">
+                    <div class="settings-label" style="width: 100%;">
+                        <span class="settings-label-text">Stadia API Key</span>
+                        <span class="settings-label-desc">Free at <a href="https://client.stadiamaps.com/signup/" target="_blank" style="color: var(--accent-cyan);">stadiamaps.com</a></span>
+                        <input type="text" id="stadiaKeyInput" class="settings-input"
+                               placeholder="your-api-key-here"
+                               onchange="Settings.setStadiaKey(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Local Asset Status</div>
+                <div class="asset-status" id="assetStatus">
+                    <div class="asset-status-row">
+                        <span class="asset-name">Leaflet JS/CSS</span>
+                        <span class="asset-badge checking" id="statusLeaflet">Checking...</span>
+                    </div>
+                    <div class="asset-status-row">
+                        <span class="asset-name">Chart.js</span>
+                        <span class="asset-badge checking" id="statusChartjs">Checking...</span>
+                    </div>
+                    <div class="asset-status-row">
+                        <span class="asset-name">Inter Font</span>
+                        <span class="asset-badge checking" id="statusInter">Checking...</span>
+                    </div>
+                    <div class="asset-status-row">
+                        <span class="asset-name">Roboto Condensed</span>
+                        <span class="asset-badge checking" id="statusJetbrains">Checking...</span>
+                    </div>
+                </div>
+                <button class="check-assets-btn" onclick="Settings.checkAssets()">
+                    Check Assets
+                </button>
+            </div>
+
+            <div class="settings-info">
+                <strong>Note:</strong> Changes to asset sources require a page reload to take effect.
+                Local assets must be available in <code>/static/vendor/</code>.
+            </div>
+        </div>
+
+        <!-- Location Section -->
+        <div id="settings-location" class="settings-section">
+            <div class="settings-group">
+                <div class="settings-group-title">Observer Location</div>
+                <p style="color: var(--text-dim); margin-bottom: 15px; font-size: 12px;">
+                    Set your geographic coordinates for satellite pass predictions and ISS tracking.
+                </p>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Latitude</span>
+                        <span class="settings-label-desc">Decimal degrees (-90 to 90)</span>
+                    </div>
+                    <input type="number" id="observerLatInput" class="settings-input"
+                           step="0.0001" min="-90" max="90" placeholder="51.5074"
+                           style="width: 120px; text-align: right;">
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Longitude</span>
+                        <span class="settings-label-desc">Decimal degrees (-180 to 180)</span>
+                    </div>
+                    <input type="number" id="observerLonInput" class="settings-input"
+                           step="0.0001" min="-180" max="180" placeholder="-0.1278"
+                           style="width: 120px; text-align: right;">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="check-assets-btn" onclick="detectLocationGPS(this)" style="flex: 1;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; vertical-align: -2px; margin-right: 5px;">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="3"/>
+                            <line x1="12" y1="2" x2="12" y2="6"/>
+                            <line x1="12" y1="18" x2="12" y2="22"/>
+                            <line x1="2" y1="12" x2="6" y2="12"/>
+                            <line x1="18" y1="12" x2="22" y2="12"/>
+                        </svg>
+                        Use GPS
+                    </button>
+                    <button class="check-assets-btn" onclick="saveObserverLocation()" style="flex: 1; background: var(--accent-cyan); color: var(--text-inverse);">
+                        Save Location
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Current Location</div>
+                <div id="currentLocationDisplay" style="padding: 12px; background: var(--bg-tertiary); border-radius: 6px; font-family: var(--font-mono); font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="color: var(--text-dim);">Latitude</span>
+                        <span id="currentLatDisplay" style="color: var(--accent-cyan);">Not set</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-dim);">Longitude</span>
+                        <span id="currentLonDisplay" style="color: var(--accent-cyan);">Not set</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-info">
+                <strong>Note:</strong> Location is used for ISS pass predictions in SSTV mode and satellite tracking.
+                Your location is stored locally and never sent to external servers.
+            </div>
+        </div>
+
+        <!-- Display Section -->
+        <div id="settings-display" class="settings-section">
+            <div class="settings-group">
+                <div class="settings-group-title">Visual Preferences</div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Theme</span>
+                        <span class="settings-label-desc">Color scheme preference</span>
+                    </div>
+                    <select id="themeSelect" class="settings-select" onchange="setThemePreference(this.value)">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Motion</span>
+                        <span class="settings-label-desc">Enable decorative motion effects</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="animationsEnabled" checked onchange="setAnimationsEnabled(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Updates Section -->
+        <div id="settings-updates" class="settings-section">
+            <div class="settings-group">
+                <div class="settings-group-title">Update Status</div>
+                <div id="updateStatusContent" style="padding: 10px 0;">
+                    <div style="text-align: center; padding: 20px; color: var(--text-dim);">
+                        Loading update status...
+                    </div>
+                </div>
+                <button class="check-assets-btn" onclick="checkForUpdatesManual()" style="margin-top: 10px;">
+                    Check Now
+                </button>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Update Settings</div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Auto-Check for Updates</span>
+                        <span class="settings-label-desc">Periodically check GitHub for new releases</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="updateCheckEnabled" checked onchange="toggleUpdateCheck(this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-info">
+                <strong>Note:</strong> Updates are fetched from GitHub and applied via git pull.
+                Make sure you have git installed and the application is in a git repository.
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div id="settings-tools" class="settings-section">
+            <div class="settings-group">
+                <div class="settings-group-title">Tool Dependencies</div>
+                <p style="color: var(--text-dim); margin-bottom: 15px; font-size: 12px;">
+                    Check which external tools are installed for each mode.
+                    <span style="color: var(--accent-green);">●</span> = Installed,
+                    <span style="color: var(--accent-red);">●</span> = Missing
+                </p>
+                <div id="settingsToolsContent" style="max-height: 45vh; overflow-y: auto;">
+                    <div style="text-align: center; padding: 30px; color: var(--text-dim);">
+                        Loading dependencies...
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group" style="margin-top: 15px;">
+                <div class="settings-group-title">Quick Install (Debian/Ubuntu)</div>
+                <div style="background: var(--bg-tertiary); padding: 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 10px; overflow-x: auto;">
+                    <div>sudo apt install rtl-sdr multimon-ng rtl-433 aircrack-ng bluez dump1090-mutability hcxdumptool hcxtools</div>
+                    <div style="margin-top: 5px;">pip install skyfield flask</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: var(--text-dim);">
+                    <strong>Note:</strong> ACARS decoding requires <code>acarsdec</code> which must be built from source.
+                    See <a href="https://github.com/TLeconte/acarsdec" target="_blank" style="color: var(--accent-cyan);">github.com/TLeconte/acarsdec</a> or run <code>./setup.sh</code> for automated installation.
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div id="settings-alerts" class="settings-section">
+            <div class="settings-group">
+                <div class="settings-group-title">Voice Alerts</div>
+                <p style="color: var(--text-dim); margin-bottom: 10px; font-size: 12px;">
+                    Configure which events trigger spoken alerts and adjust voice settings.
+                </p>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Pager Messages</span>
+                        <span class="settings-label-desc">Speak decoded pager messages</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="voiceCfgPager" checked onchange="saveVoiceAlertConfig()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">TSCM Alerts</span>
+                        <span class="settings-label-desc">Speak counter-surveillance detections</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="voiceCfgTscm" checked onchange="saveVoiceAlertConfig()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Tracker Detection</span>
+                        <span class="settings-label-desc">Speak when AirTag, Tile, or SmartTag found</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="voiceCfgTracker" checked onchange="saveVoiceAlertConfig()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Military Aircraft</span>
+                        <span class="settings-label-desc">Speak when military aircraft are detected</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="voiceCfgAdsbMilitary" checked onchange="saveVoiceAlertConfig()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Emergency Squawks</span>
+                        <span class="settings-label-desc">Speak aircraft emergency transponder codes</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="voiceCfgSquawk" checked onchange="saveVoiceAlertConfig()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Voice</span>
+                        <span class="settings-label-desc">Speech synthesis voice</span>
+                    </div>
+                    <select id="voiceCfgVoice" class="settings-select" style="width: 200px;" onchange="saveVoiceAlertConfig()">
+                        <option value="">Default</option>
+                    </select>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Rate</span>
+                        <span class="settings-label-desc">Speech speed (0.5 – 2.0)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; width:200px;">
+                        <input type="range" id="voiceCfgRate" min="0.5" max="2.0" step="0.1" value="1.1" style="flex:1;" oninput="document.getElementById('voiceCfgRateVal').textContent=this.value; saveVoiceAlertConfig();">
+                        <span id="voiceCfgRateVal" style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); min-width:28px; text-align:right;">1.1</span>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Pitch</span>
+                        <span class="settings-label-desc">Voice pitch (0.5 – 2.0)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; width:200px;">
+                        <input type="range" id="voiceCfgPitch" min="0.5" max="2.0" step="0.1" value="0.9" style="flex:1;" oninput="document.getElementById('voiceCfgPitchVal').textContent=this.value; saveVoiceAlertConfig();">
+                        <span id="voiceCfgPitchVal" style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); min-width:28px; text-align:right;">0.9</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <button class="check-assets-btn" onclick="testVoiceAlert()">Test Voice</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Alert Feed <span id="alertsFeedCount" style="color: var(--text-dim); font-weight: 500;"></span></div>
+                <div id="alertsFeedList" class="settings-feed">
+                    <div class="settings-feed-empty">No alerts yet</div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Rule Builder</div>
+                <div class="settings-row" style="border-bottom: none; padding-top: 0;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Rule Name</span>
+                        <span class="settings-label-desc">Human-friendly title for this alert</span>
+                    </div>
+                    <input type="text" id="alertsRuleName" class="settings-input" placeholder="New alert rule" style="width: 220px;">
+                </div>
+                <div class="settings-row" style="border-bottom: none;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Mode</span>
+                        <span class="settings-label-desc">Filter to a specific mode or all</span>
+                    </div>
+                    <select id="alertsRuleMode" class="settings-select" style="width: 220px;">
+                        <option value="">All modes</option>
+                        <option value="pager">Pager</option>
+                        <option value="sensor">433 Sensors</option>
+                        <option value="wifi">WiFi</option>
+                        <option value="bluetooth">Bluetooth</option>
+                        <option value="adsb">ADS-B</option>
+                        <option value="ais">AIS</option>
+                        <option value="acars">ACARS</option>
+                        <option value="vdl2">VDL2</option>
+                        <option value="aprs">APRS</option>
+                        <option value="meshtastic">Meshtastic</option>
+                    </select>
+                </div>
+                <div class="settings-row" style="border-bottom: none;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Event Type</span>
+                        <span class="settings-label-desc">Optional event type (for example <code>device_update</code>)</span>
+                    </div>
+                    <input type="text" id="alertsRuleEventType" class="settings-input" placeholder="Optional" style="width: 220px;">
+                </div>
+                <div class="settings-row" style="border-bottom: none;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Match Filter</span>
+                        <span class="settings-label-desc">Optional key/value exact match (for example <code>address</code> + MAC)</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="alertsRuleMatchKey" class="settings-input" placeholder="key" style="width: 100px;">
+                        <input type="text" id="alertsRuleMatchValue" class="settings-input" placeholder="value" style="width: 112px;">
+                    </div>
+                </div>
+                <div class="settings-row" style="border-bottom: none;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Severity</span>
+                        <span class="settings-label-desc">Controls priority coloring and notifications</span>
+                    </div>
+                    <select id="alertsRuleSeverity" class="settings-select" style="width: 220px;">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                    <button class="check-assets-btn" onclick="AlertCenter.saveRule()">Save Rule</button>
+                    <button class="check-assets-btn" onclick="AlertCenter.clearRuleForm()">Clear</button>
+                    <button class="check-assets-btn" onclick="AlertCenter.loadRules()">Refresh Rules</button>
+                </div>
+                <input type="hidden" id="alertsRuleEditingId" value="">
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Quick Rules</div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="check-assets-btn" onclick="AlertCenter.enableTrackerAlerts()">Enable Tracker Alerts</button>
+                    <button class="check-assets-btn" onclick="AlertCenter.disableTrackerAlerts()">Disable Tracker Alerts</button>
+                </div>
+                <div class="settings-info" style="margin-top: 10px;">
+                    Use Bluetooth device details to add specific device watchlist alerts.
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Active Rules</div>
+                <div id="alertsRulesList" class="settings-feed">
+                    <div class="settings-feed-empty">No rules yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recording Section -->
+        <div id="settings-recording" class="settings-section">
+            <div class="settings-group">
+                <div class="settings-group-title">Start Recording</div>
+                <div class="settings-row" style="border-bottom: none; padding-top: 0;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Mode</span>
+                        <span class="settings-label-desc">Record live events for a mode</span>
+                    </div>
+                    <select id="recordingModeSelect" class="settings-select" style="width: 200px;">
+                        <option value="pager">Pager</option>
+                        <option value="sensor">433 Sensors</option>
+                        <option value="wifi">WiFi</option>
+                        <option value="bluetooth">Bluetooth</option>
+                        <option value="adsb">ADS-B</option>
+                        <option value="ais">AIS</option>
+                        <option value="acars">ACARS</option>
+                        <option value="aprs">APRS</option>
+                        <option value="rtlamr">RTLAMR</option>
+                        <option value="tscm">TSCM</option>
+                        <option value="sstv">SSTV</option>
+                        <option value="sstv_general">SSTV General</option>
+                        <option value="waterfall">Waterfall</option>
+                    </select>
+                </div>
+                <div class="settings-row" style="border-bottom: none;">
+                    <div class="settings-label">
+                        <span class="settings-label-text">Label</span>
+                        <span class="settings-label-desc">Optional note for the session</span>
+                    </div>
+                    <input type="text" id="recordingLabelInput" class="settings-input" placeholder="Morning sweep" style="width: 200px;">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="check-assets-btn" onclick="RecordingUI.start()">Start</button>
+                    <button class="check-assets-btn" onclick="RecordingUI.stop()">Stop</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Active Sessions</div>
+                <div id="recordingActiveList" class="settings-feed">
+                    <div class="settings-feed-empty">No active recordings</div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Recent Recordings</div>
+                <div id="recordingList" class="settings-feed">
+                    <div class="settings-feed-empty">No recordings yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div id="settings-about" class="settings-section">
+            <div class="settings-group">
+                <div class="about-info">
+                    <p><strong><span class="brand-i"><svg viewBox="36 14 28 68" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="20" r="6" fill="#00ff88"/><rect x="44" y="33" width="12" height="45" rx="2" fill="#00d4ff"/><rect x="38" y="33" width="24" height="4" rx="1" fill="#00d4ff"/><rect x="38" y="74" width="24" height="4" rx="1" fill="#00d4ff"/></svg></span>NTERCEPT Lab</strong> - RF Research Workspace</p>
+                    <p>Version: <span class="about-version">{{ version }}</span></p>
+                    <p>
+                        A unified web interface for software-defined radio (SDR) tools,
+                        supporting classroom demonstrations, authorized signal analysis,
+                        logging, and experimentation workflows.
+                    </p>
+                    <p>
+                        <a href="https://github.com/smittix/intercept" target="_blank">GitHub Repository</a>
+                    </p>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">Support the Project</div>
+                <p style="color: var(--text-dim); margin-bottom: 15px; font-size: 12px;">
+                    If you find <span class="brand-i"><svg viewBox="36 14 28 68" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="20" r="6" fill="#00ff88"/><rect x="44" y="33" width="12" height="45" rx="2" fill="#00d4ff"/><rect x="38" y="33" width="24" height="4" rx="1" fill="#00d4ff"/><rect x="38" y="74" width="24" height="4" rx="1" fill="#00d4ff"/></svg></span>NTERCEPT Lab useful, consider supporting its development.
+                </p>
+                <a href="https://buymeacoffee.com/smittix" target="_blank" rel="noopener noreferrer" class="donate-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; vertical-align: -3px; margin-right: 8px;">
+                        <path d="M17 8h1a4 4 0 1 1 0 8h-1"/>
+                        <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>
+                        <line x1="6" y1="2" x2="6" y2="4"/>
+                        <line x1="10" y1="2" x2="10" y2="4"/>
+                        <line x1="14" y1="2" x2="14" y2="4"/>
+                    </svg>
+                    Buy Me a Coffee
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,87 @@
+<!-- SIGINT — Distributed Signal Intelligence Mode -->
+<div id="sigintMode" class="mode-content">
+
+    <!-- Configuration -->
+    <div class="section">
+        <h3>SIGINT Scanner</h3>
+
+        <div class="form-group">
+            <label>Scan Band</label>
+            <select id="sigintBand">
+                <option value="ism_433">ISM 433 MHz (IoT / Keyfobs)</option>
+                <option value="pmr_446">PMR 446 MHz (Voice)</option>
+                <option value="ism_868">ISM 868 MHz (LoRa / EU)</option>
+                <option value="pager">Pager VHF (152–174 MHz)</option>
+                <option value="keyfob">Keyfob 315 MHz</option>
+                <option value="full_ism">Full ISM Sweep</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>SDR Device Index</label>
+            <input type="number" id="sigintDeviceIndex" value="0" min="0" max="10" style="width: 80px;">
+        </div>
+
+        <div class="form-group">
+            <label>Gain (dB)</label>
+            <input type="range" id="sigintGain" min="0" max="50" value="40" style="width: 100%;">
+            <span id="sigintGainVal" style="font-size: 10px; color: var(--text-dim);">40 dB</span>
+        </div>
+
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <button class="action-btn primary" onclick="SIGINT.start()" id="sigintStartBtn">Start Scan</button>
+            <button class="action-btn" onclick="SIGINT.stop()" id="sigintStopBtn">Stop</button>
+            <button class="action-btn" onclick="SIGINT.clear()">Clear</button>
+        </div>
+    </div>
+
+    <!-- Output panel -->
+    <div class="output-panel">
+
+        <!-- Protocol filter tabs -->
+        <div style="display: flex; gap: 0; border-bottom: 1px solid var(--border-color); margin-bottom: 10px; overflow-x: auto; scrollbar-width: none;">
+            <button class="cuas-tab active" data-proto="ALL" onclick="SIGINT.filterProtocol('ALL')">All</button>
+            <button class="cuas-tab" data-proto="KEYFOB" onclick="SIGINT.filterProtocol('KEYFOB')">Keyfob</button>
+            <button class="cuas-tab" data-proto="TPMS" onclick="SIGINT.filterProtocol('TPMS')">TPMS</button>
+            <button class="cuas-tab" data-proto="PAGER" onclick="SIGINT.filterProtocol('PAGER')">Pager</button>
+            <button class="cuas-tab" data-proto="PMR" onclick="SIGINT.filterProtocol('PMR')">PMR Voice</button>
+            <button class="cuas-tab" data-proto="ISM" onclick="SIGINT.filterProtocol('ISM')">ISM</button>
+            <button class="cuas-tab" data-proto="UNKNOWN" onclick="SIGINT.filterProtocol('UNKNOWN')">Unknown</button>
+        </div>
+
+        <!-- Status bar -->
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-family: var(--font-mono); font-size: 10px;">
+            <span class="status-dot inactive" id="sigintStatusDot"></span>
+            <span id="sigintStatusText" style="color: var(--text-secondary);">Idle</span>
+            <span id="sigintDetCount" style="color: var(--text-dim); margin-left: auto;">0 signals</span>
+            <button class="cuas-btn" onclick="SIGINT.exportCOT()">Export CoT (ATAK)</button>
+            <button class="cuas-btn" onclick="SIGINT.exportJSON()">Export JSON</button>
+        </div>
+
+        <!-- Detection table -->
+        <table class="cuas-detections-table" id="sigintDetTable">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Protocol</th>
+                    <th>Freq (MHz)</th>
+                    <th>RSSI</th>
+                    <th>Mod</th>
+                    <th>Message / Model</th>
+                </tr>
+            </thead>
+            <tbody id="sigintDetBody">
+                <tr>
+                    <td colspan="6" class="cuas-empty">No signals detected. Start a scan to begin.</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<script>
+document.getElementById('sigintGain').addEventListener('input', function() {
+    document.getElementById('sigintGainVal').textContent = this.value + ' dB';
+});
+</script>

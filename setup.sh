@@ -1,0 +1,3013 @@
+#!/usr/bin/env bash
+# INTERCEPT Lab Setup Script - Menu-driven installer with profile system
+# Supports: first-time wizard, selective module install, health check,
+#           PostgreSQL setup, environment configurator, update, uninstall.
+
+# ---- Force bash even if launched with sh ----
+if [ -z "${BASH_VERSION:-}" ]; then
+  echo "[x] This script must be run with bash (not sh)."
+  echo "    Run: bash $0"
+  exec bash "$0" "$@"
+fi
+
+set -Eeuo pipefail
+
+# Ensure admin paths are searchable (many tools live here)
+export PATH="/usr/local/sbin:/usr/sbin:/sbin:/opt/homebrew/sbin:/opt/homebrew/bin:$PATH"
+
+# ----------------------------
+# Pretty output
+# ----------------------------
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+DIM='\033[2m'
+NC='\033[0m'
+
+info()  { echo -e "${BLUE}[*]${NC} $*"; }
+ok()    { echo -e "${GREEN}[✓]${NC} $*"; }
+warn()  { echo -e "${YELLOW}[!]${NC} $*"; }
+fail()  { echo -e "${RED}[x]${NC} $*"; }
+
+# ----------------------------
+# Progress tracking
+# ----------------------------
+CURRENT_STEP=0
+TOTAL_STEPS=0
+
+progress() {
+  local msg="$1"
+  ((CURRENT_STEP++)) || true
+  local pct=$((CURRENT_STEP * 100 / TOTAL_STEPS))
+  local filled=$((pct / 5))
+  local empty=$((20 - filled))
+  local bar=$(printf '█%.0s' $(seq 1 $filled 2>/dev/null) || true)
+  bar+=$(printf '░%.0s' $(seq 1 $empty 2>/dev/null) || true)
+  echo -e "${BLUE}[${CURRENT_STEP}/${TOTAL_STEPS}]${NC} ${bar} ${pct}% - ${msg}"
+}
+
+on_error() {
+  local line="$1"
+  local cmd="${2:-unknown}"
+  fail "Setup failed at line ${line}: ${cmd}"
+  exit 1
+}
+trap 'on_error $LINENO "$BASH_COMMAND"' ERR
+
+# ----------------------------
+# Script directory
+# ----------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# ----------------------------
+# Banner
+# ----------------------------
+show_banner() {
+  echo -e "${BLUE}"
+  echo "  ___ _   _ _____ _____ ____   ____ _____ ____ _____ "
+  echo " |_ _| \\ | |_   _| ____|  _ \\ / ___| ____|  _ \\_   _|"
+  echo "  | ||  \\| | | | |  _| | |_) | |   |  _| | |_) || |  "
+  echo "  | || |\\  | | | | |___|  _ <| |___| |___|  __/ | |  "
+  echo " |___|_| \\_| |_| |_____|_| \\_\\\\____|_____|_|    |_|  "
+  echo -e "${NC}"
+}
+
+# ----------------------------
+# Helpers
+# ----------------------------
+NON_INTERACTIVE=false
+CLI_PROFILES=""
+CLI_ACTION=""
+
+cmd_exists() {
+  local c="$1"
+  command -v "$c" >/dev/null 2>&1 && return 0
+  [[ -x "/usr/sbin/$c" || -x "/sbin/$c" || -x "/usr/local/sbin/$c" || -x "/opt/homebrew/sbin/$c" ]] && return 0
+  return 1
+}
+
+ask_yes_no() {
+  local prompt="$1"
+  local default="${2:-n}"  # default to no for safety
+  local response
+
+  if $NON_INTERACTIVE; then
+    info "Non-interactive mode: defaulting to ${default} for prompt: ${prompt}"
+    [[ "$default" == "y" ]]
+    return
+  fi
+
+  if [[ ! -t 0 ]]; then
+    warn "No TTY available for prompt: ${prompt}"
+    [[ "$default" == "y" ]]
+    return
+  fi
+
+  if [[ "$default" == "y" ]]; then
+    read -r -p "$prompt [Y/n]: " response
+    [[ -z "$response" || "$response" =~ ^[Yy] ]]
+  else
+    read -r -p "$prompt [y/N]: " response
+    [[ "$response" =~ ^[Yy] ]]
+  fi
+}
+
+have_any() {
+  local c
+  for c in "$@"; do
+    cmd_exists "$c" && return 0
+  done
+  return 1
+}
+
+need_sudo() {
+  if [[ "$(id -u)" -eq 0 ]]; then
+    SUDO=""
+    ok "Running as root"
+  else
+    if cmd_exists sudo; then
+      SUDO="sudo"
+    else
+      fail "sudo is not installed and you're not root."
+      echo "Either run as root or install sudo first."
+      exit 1
+    fi
+  fi
+}
+
+refresh_sudo() {
+  [[ -z "${SUDO:-}" ]] && return 0
+  sudo -v 2>/dev/null || true
+}
+
+detect_os() {
+  if [[ "${OSTYPE:-}" == "darwin"* ]]; then
+    OS="macos"
+  elif [[ -f /etc/debian_version ]]; then
+    OS="debian"
+  else
+    OS="unknown"
+  fi
+  [[ "$OS" != "unknown" ]] || { fail "Unsupported OS (macOS + Debian/Ubuntu only)."; exit 1; }
+}
+
+detect_dragonos() {
+  IS_DRAGONOS=false
+  if [[ -f /etc/dragonos-release ]] || \
+     [[ -d /usr/share/dragonos ]] || \
+     grep -qi "dragonos" /etc/os-release 2>/dev/null; then
+    IS_DRAGONOS=true
+    warn "DragonOS detected! This distro has many tools pre-installed."
+    warn "The script will prompt before making system changes."
+  fi
+}
+
+# ----------------------------
+# .env file helpers
+# ----------------------------
+read_env_var() {
+  local key="$1"
+  local fallback="${2:-}"
+  if [[ -f "$SCRIPT_DIR/.env" ]]; then
+    local val
+    val=$(grep -E "^${key}=" "$SCRIPT_DIR/.env" 2>/dev/null | tail -1 | cut -d'=' -f2- || true)
+    if [[ -n "$val" ]]; then
+      # Strip surrounding quotes
+      val="${val#\"}"
+      val="${val%\"}"
+      val="${val#\'}"
+      val="${val%\'}"
+      echo "$val"
+      return
+    fi
+  fi
+  echo "$fallback"
+}
+
+write_env_var() {
+  local key="$1"
+  local value="$2"
+  local env_file="$SCRIPT_DIR/.env"
+
+  if [[ ! -f "$env_file" ]]; then
+    echo "# INTERCEPT Lab environment configuration" > "$env_file"
+    echo "# Generated by setup.sh on $(date)" >> "$env_file"
+    echo "" >> "$env_file"
+  fi
+
+  if grep -qE "^${key}=" "$env_file" 2>/dev/null; then
+    # Update existing
+    local tmp
+    tmp=$(mktemp)
+    sed "s|^${key}=.*|${key}=${value}|" "$env_file" > "$tmp" && mv "$tmp" "$env_file"
+  else
+    echo "${key}=${value}" >> "$env_file"
+  fi
+}
+
+systemd_available() {
+  [[ "${OS:-}" == "debian" ]] || return 1
+  cmd_exists systemctl || return 1
+  [[ -d /run/systemd/system || -d /etc/systemd/system ]]
+}
+
+install_intercept_service() {
+  systemd_available || return 0
+  need_sudo
+
+  local unit_path="/etc/systemd/system/intercept-lab.service"
+  local tmp_unit
+  tmp_unit=$(mktemp)
+
+  cat > "$tmp_unit" <<EOF
+[Unit]
+Description=INTERCEPT Lab Web App
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=${SCRIPT_DIR}
+EnvironmentFile=-${SCRIPT_DIR}/.env
+ExecStart=${SCRIPT_DIR}/start.sh
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  $SUDO cp "$tmp_unit" "$unit_path"
+  rm -f "$tmp_unit"
+  $SUDO systemctl daemon-reload
+  $SUDO systemctl enable intercept-lab.service >/dev/null 2>&1 || true
+  ok "Installed systemd service: intercept-lab.service"
+
+  if ask_yes_no "Start the INTERCEPT Lab service now?" "y"; then
+    $SUDO systemctl restart intercept-lab.service
+    ok "Service started. Check status with: sudo systemctl status intercept-lab.service"
+  else
+    info "Start it later with: sudo systemctl start intercept-lab.service"
+  fi
+}
+
+prompt_install_intercept_service() {
+  if systemd_available; then
+    echo
+    if ask_yes_no "Install optional systemd service for INTERCEPT Lab auto-start?" "n"; then
+      install_intercept_service
+    fi
+  fi
+}
+
+# ============================================================
+# TOOL REGISTRY & PROFILE SYSTEM
+# ============================================================
+# Profile bitmask:
+#   1 = Core SIGINT
+#   2 = Maritime & Radio
+#   4 = Weather & Space
+#   8 = RF Security
+#  15 = Full SIGINT (all)
+
+PROFILE_CORE=1
+PROFILE_MARITIME=2
+PROFILE_WEATHER=4
+PROFILE_SECURITY=8
+PROFILE_FULL=15
+
+# Tool registry as parallel indexed arrays (Bash 3.2 compatible — no associative arrays)
+# Format: TOOL_KEYS[i] = key, TOOL_ENTRIES[i] = "profile_mask|check_command|description"
+TOOL_KEYS=(
+  rtl_sdr multimon_ng rtl_433 dump1090 acarsdec dumpvdl2 ffmpeg gpsd
+  hackrf rtlamr ais_catcher direwolf satdump radiosonde
+  aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr rtlsdr_blog
+)
+TOOL_ENTRIES=(
+  "1|rtl_fm|RTL-SDR tools (rtl_fm, rtl_test, rtl_tcp)"
+  "1|multimon-ng|Pager decoder (POCSAG/FLEX)"
+  "1|rtl_433|433MHz IoT sensor decoder"
+  "1|dump1090|ADS-B aircraft decoder"
+  "1|acarsdec|ACARS aircraft message decoder"
+  "1|dumpvdl2|VDL2 aircraft datalink decoder"
+  "1|ffmpeg|Audio/video encoder"
+  "1|gpsd|GPS daemon"
+  "8|hackrf_transfer|HackRF tools"
+  "1|rtlamr|Utility meter decoder (requires Go)"
+  "2|AIS-catcher|AIS vessel tracker"
+  "2|direwolf|APRS packet radio decoder"
+  "4|satdump|Weather satellite decoder (NOAA/Meteor)"
+  "4|auto_rx.py|Radiosonde weather balloon decoder"
+  "8|airmon-ng|WiFi security suite"
+  "8|hcxdumptool|PMKID capture tool"
+  "8|hcxpcapngtool|PMKID/pcapng conversion"
+  "8|bluetoothctl|Bluetooth tools (BlueZ)"
+  "8|ubertooth-btle|Ubertooth BLE sniffer"
+  "8|SoapySDRUtil|SoapySDR utility"
+  "1|SKIP|RTL-SDR Blog V4 drivers"
+)
+
+# Lookup helper: get entry by key name
+_tool_entry() {
+  local key="$1"
+  local i
+  for i in "${!TOOL_KEYS[@]}"; do
+    if [[ "${TOOL_KEYS[$i]}" == "$key" ]]; then
+      echo "${TOOL_ENTRIES[$i]}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+profile_name() {
+  case "$1" in
+    1) echo "Core SIGINT" ;;
+    2) echo "Maritime & Radio" ;;
+    4) echo "Weather & Space" ;;
+    8) echo "RF Security" ;;
+    15) echo "Full SIGINT" ;;
+    *) echo "Custom" ;;
+  esac
+}
+
+tool_is_installed() {
+  local key="$1"
+  local entry
+  entry=$(_tool_entry "$key") || return 1
+  local check_cmd
+  check_cmd=$(echo "$entry" | cut -d'|' -f2)
+
+  # Special cases
+  [[ "$check_cmd" == "SKIP" ]] && return 1
+
+  if [[ "$key" == "radiosonde" ]]; then
+    [[ -f /opt/radiosonde_auto_rx/auto_rx/auto_rx.py ]] && \
+    [[ -f /opt/radiosonde_auto_rx/auto_rx/dft_detect ]] && return 0
+    return 1
+  fi
+  if [[ "$key" == "ais_catcher" ]]; then
+    have_any AIS-catcher aiscatcher && return 0
+    return 1
+  fi
+  if [[ "$key" == "rtl_433" ]]; then
+    have_any rtl_433 rtl433 && return 0
+    return 1
+  fi
+
+  cmd_exists "$check_cmd"
+}
+
+tool_version() {
+  local key="$1"
+  local entry
+  entry=$(_tool_entry "$key") || { echo "?"; return; }
+  local check_cmd
+  check_cmd=$(echo "$entry" | cut -d'|' -f2)
+  [[ "$check_cmd" == "SKIP" ]] && echo "n/a" && return
+
+  # Try common version flags
+  local ver=""
+  ver=$($check_cmd --version 2>&1 | head -1) 2>/dev/null || \
+  ver=$($check_cmd -V 2>&1 | head -1) 2>/dev/null || \
+  ver=$($check_cmd -v 2>&1 | head -1) 2>/dev/null || \
+  ver="installed"
+  echo "$ver" | head -c 60
+}
+
+# ============================================================
+# MENU RENDERING
+# ============================================================
+draw_line() {
+  printf '%*s\n' "${1:-60}" '' | tr ' ' "${2:-═}"
+}
+
+show_main_menu() {
+  echo
+  echo -e "${BOLD}${CYAN}INTERCEPT Lab Setup Menu${NC}"
+  draw_line 40
+  echo -e "  ${BOLD}1)${NC} Install / Add Modules"
+  echo -e "  ${BOLD}2)${NC} System Health Check"
+  echo -e "  ${BOLD}3)${NC} Database Setup (ADS-B History)"
+  echo -e "  ${BOLD}4)${NC} Update Tools"
+  echo -e "  ${BOLD}5)${NC} Environment Configurator"
+  echo -e "  ${BOLD}6)${NC} Uninstall / Cleanup"
+  echo -e "  ${BOLD}7)${NC} View Status"
+  echo -e "  ${BOLD}0)${NC} Exit"
+  draw_line 40
+  echo -n "Select option: "
+}
+
+show_profile_menu() {
+  echo
+  echo -e "${BOLD}${CYAN}Install Profiles${NC} ${DIM}(space-separated for multiple, e.g. \"1 3\")${NC}"
+  draw_line 50
+  echo -e "  ${BOLD}1)${NC} Core SIGINT     — rtl_sdr, multimon-ng, rtl_433, dump1090, acarsdec, dumpvdl2, ffmpeg, gpsd"
+  echo -e "  ${BOLD}2)${NC} Maritime & Radio — AIS-catcher, direwolf"
+  echo -e "  ${BOLD}3)${NC} Weather & Space  — SatDump, radiosonde_auto_rx"
+  echo -e "  ${BOLD}4)${NC} RF Security      — aircrack-ng, HackRF, BlueZ, hcxtools, Ubertooth, SoapySDR"
+  echo -e "  ${BOLD}5)${NC} Full SIGINT      — All of the above"
+  echo -e "  ${BOLD}6)${NC} Custom           — Per-tool checklist"
+  draw_line 50
+  echo -n "Select profiles: "
+}
+
+# Convert profile menu selections to bitmask
+selections_to_mask() {
+  local selections="$1"
+  local mask=0
+  for sel in $selections; do
+    case "$sel" in
+      1) mask=$((mask | PROFILE_CORE)) ;;
+      2) mask=$((mask | PROFILE_MARITIME)) ;;
+      3) mask=$((mask | PROFILE_WEATHER)) ;;
+      4) mask=$((mask | PROFILE_SECURITY)) ;;
+      5) mask=$PROFILE_FULL ;;
+      6) mask=-1 ;; # custom
+    esac
+  done
+  echo $mask
+}
+
+# ============================================================
+# REQUIRED TOOL CHECKS (preserved from original)
+# ============================================================
+missing_required=()
+missing_recommended=()
+
+check_required() {
+  local label="$1"; shift
+  local desc="$1"; shift
+
+  if have_any "$@"; then
+    ok "${label} - ${desc}"
+  else
+    warn "${label} - ${desc} (missing, required)"
+    missing_required+=("$label")
+  fi
+}
+
+check_recommended() {
+  local label="$1"; shift
+  local desc="$1"; shift
+
+  if have_any "$@"; then
+    ok "${label} - ${desc}"
+  else
+    warn "${label} - ${desc} (missing, recommended)"
+    missing_recommended+=("$label")
+  fi
+}
+
+check_optional() {
+  local label="$1"; shift
+  local desc="$1"; shift
+
+  if have_any "$@"; then
+    ok "${label} - ${desc}"
+  else
+    warn "${label} - ${desc} (missing, optional)"
+  fi
+}
+
+check_tools() {
+  info "Checking required tools..."
+  missing_required=()
+
+  echo
+  info "Core SDR:"
+  check_required "rtl_fm"      "RTL-SDR FM demodulator" rtl_fm
+  check_required "rtl_test"    "RTL-SDR device detection" rtl_test
+  check_required "rtl_tcp"     "RTL-SDR TCP server" rtl_tcp
+  check_required "multimon-ng" "Pager decoder" multimon-ng
+  check_required "rtl_433"     "433MHz sensor decoder" rtl_433 rtl433
+  check_optional "rtlamr"      "Utility meter decoder (requires Go)" rtlamr
+  check_optional "hackrf_transfer" "HackRF SubGHz transceiver" hackrf_transfer
+  check_optional "hackrf_sweep"    "HackRF spectrum analyzer" hackrf_sweep
+  check_required "dump1090"    "ADS-B decoder" dump1090
+  check_required "acarsdec"    "ACARS decoder" acarsdec
+  check_optional "dumpvdl2"    "VDL2 decoder" dumpvdl2
+  check_required "AIS-catcher" "AIS vessel decoder" AIS-catcher aiscatcher
+  check_optional "satdump" "Weather satellite decoder (NOAA/Meteor)" satdump
+  if [[ -f /opt/radiosonde_auto_rx/auto_rx/auto_rx.py ]] && [[ -f /opt/radiosonde_auto_rx/auto_rx/dft_detect ]]; then
+    ok "auto_rx.py - Radiosonde weather balloon decoder"
+  else
+    warn "auto_rx.py - Radiosonde weather balloon decoder (missing, optional)"
+  fi
+  echo
+  info "GPS:"
+  check_required "gpsd" "GPS daemon" gpsd
+
+  echo
+  info "Audio:"
+  check_required "ffmpeg" "Audio encoder/decoder" ffmpeg
+
+  echo
+  info "WiFi:"
+  check_required "airmon-ng"     "Monitor mode helper" airmon-ng
+  check_required "airodump-ng"   "WiFi scanner" airodump-ng
+  check_required "aireplay-ng"   "Injection/deauth" aireplay-ng
+  check_required "hcxdumptool"   "PMKID capture" hcxdumptool
+  check_required "hcxpcapngtool" "PMKID/pcapng conversion" hcxpcapngtool
+
+  echo
+  info "Bluetooth:"
+  check_required "bluetoothctl" "Bluetooth controller CLI" bluetoothctl
+  check_required "hcitool"      "Bluetooth scan utility" hcitool
+  check_required "hciconfig"    "Bluetooth adapter config" hciconfig
+
+  echo
+  info "SoapySDR:"
+  check_required "SoapySDRUtil" "SoapySDR CLI utility" SoapySDRUtil
+  echo
+}
+
+# ============================================================
+# PYTHON VENV SETUP (preserved from original)
+# ============================================================
+check_python_version() {
+  if ! cmd_exists python3; then
+    fail "python3 not found."
+    [[ "$OS" == "macos" ]] && echo "Install with: brew install python"
+    [[ "$OS" == "debian" ]] && echo "Install with: sudo apt-get install python3"
+    exit 1
+  fi
+
+  local ver
+  ver="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+  info "Python version: ${ver}"
+
+  python3 - <<'PY'
+import sys
+raise SystemExit(0 if sys.version_info >= (3,9) else 1)
+PY
+  ok "Python version OK (>= 3.9)"
+
+  # Python 3.13+ warning: some packages (gevent, numpy, scipy) may not have
+  # pre-built wheels yet and will be skipped to avoid hanging on compilation.
+  if python3 - <<'PY'
+import sys
+raise SystemExit(0 if sys.version_info >= (3,13) else 1)
+PY
+  then
+    warn "Python 3.13+ detected: optional packages without pre-built wheels will be skipped (--prefer-binary)."
+  fi
+}
+
+install_python_deps() {
+  progress "Setting up Python environment"
+  check_python_version
+
+  if [[ ! -f requirements.txt ]]; then
+    warn "requirements.txt not found; skipping Python dependency install."
+    return 0
+  fi
+
+  # On Debian/Ubuntu, try apt packages first as they're more reliable
+  if [[ "$OS" == "debian" ]]; then
+    info "Installing Python packages via apt (more reliable on Debian/Ubuntu)..."
+    $SUDO apt-get install -y python3-flask python3-requests python3-serial >/dev/null 2>&1 || true
+
+    if ! $SUDO apt-get install -y python3-skyfield >/dev/null 2>&1; then
+      warn "python3-skyfield not in apt, will try pip later"
+    fi
+    ok "Installed available Python packages via apt"
+  fi
+
+  if [[ ! -d venv ]]; then
+    python3 -m venv --system-site-packages venv
+    ok "Created venv/ (with system site-packages)"
+  else
+    ok "Using existing venv/"
+  fi
+
+  # shellcheck disable=SC1091
+  source venv/bin/activate
+  local PIP="venv/bin/python -m pip"
+  local PY="venv/bin/python"
+  # --no-cache-dir avoids pip hanging on a corrupt/stale HTTP cache (cachecontrol .pyc issue)
+  # --timeout prevents pip from hanging indefinitely on slow/unresponsive PyPI connections
+  local PIP_OPTS="--no-cache-dir --timeout 120"
+
+  if ! $PIP install $PIP_OPTS --upgrade pip setuptools wheel; then
+    warn "pip/setuptools/wheel upgrade failed - continuing with existing versions"
+  else
+    ok "Upgraded pip tooling"
+  fi
+
+  progress "Installing Python dependencies"
+
+  info "Installing core packages..."
+  $PIP install $PIP_OPTS "flask>=3.0.0" "flask-wtf>=1.2.0" "flask-compress>=1.15" \
+    "flask-limiter>=2.5.4" "requests>=2.28.0" \
+    "Werkzeug>=3.1.5" "pyserial>=3.5" || true
+
+  # Verify core packages are installed by checking pip's reported list (avoids hanging imports)
+  for core_pkg in flask requests flask-limiter flask-compress flask-wtf; do
+    if ! $PIP show "$core_pkg" >/dev/null 2>&1; then
+      fail "Critical Python package not installed: ${core_pkg}"
+      echo "Try: venv/bin/pip install ${core_pkg}"
+      exit 1
+    fi
+  done
+  ok "Core Python packages installed"
+
+  info "Installing optional packages..."
+  # Pure-Python packages: install without --only-binary so they always succeed regardless of platform
+  for pkg in "flask-sock" "simple-websocket>=0.5.1" "websocket-client>=1.6.0" \
+             "skyfield>=1.45" "bleak>=0.21.0" "meshtastic>=2.0.0" \
+             "qrcode[pil]>=7.4" "gunicorn>=21.2.0" "psutil>=5.9.0"; do
+    pkg_name="${pkg%%[><=]*}"
+    info "  Installing ${pkg_name}..."
+    if ! $PIP install $PIP_OPTS "$pkg"; then
+      warn "${pkg_name} failed to install (optional - related features may be unavailable)"
+    fi
+  done
+  # Compiled packages: use --only-binary :all: to skip slow source compilation on RPi
+  for pkg in "numpy>=1.24.0" "scipy>=1.10.0" "Pillow>=9.0.0" \
+             "psycopg2-binary>=2.9.9" "scapy>=2.4.5" "cryptography>=41.0.0" \
+             "gevent>=23.9.0"; do
+    pkg_name="${pkg%%[><=]*}"
+    info "  Installing ${pkg_name}..."
+    # --only-binary :all: prevents source compilation hangs for heavy packages
+    if ! $PIP install $PIP_OPTS --only-binary :all: "$pkg"; then
+      warn "${pkg_name} failed to install (optional - related features may be unavailable)"
+    fi
+  done
+  ok "Optional packages processed"
+  echo
+}
+
+# ============================================================
+# macOS HELPERS (preserved from original)
+# ============================================================
+ensure_brew() {
+  cmd_exists brew && return 0
+  warn "Homebrew not found. Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+
+  cmd_exists brew || { fail "Homebrew install failed. Install manually then re-run."; exit 1; }
+}
+
+brew_install() {
+  local pkg="$1"
+  if brew list --formula "$pkg" >/dev/null 2>&1; then
+    ok "brew: ${pkg} already installed"
+    return 0
+  fi
+  info "brew: installing ${pkg}..."
+  if brew install "$pkg" 2>&1; then
+    ok "brew: installed ${pkg}"
+    return 0
+  else
+    return 1
+  fi
+}
+
+# ============================================================
+# Debian/Ubuntu APT HELPERS (preserved from original)
+# ============================================================
+apt_install() {
+  local pkgs="$*"
+  local output
+  local ret=0
+  output=$($SUDO apt-get install -y --no-install-recommends "$@" 2>&1) || ret=$?
+  if [[ $ret -ne 0 ]]; then
+    fail "Failed to install: $pkgs"
+    echo "$output" | tail -10
+    fail "Try running: sudo apt-get update && sudo apt-get install -y $pkgs"
+    return 1
+  fi
+}
+
+wait_for_apt_lock() {
+  local max_wait=120
+  local waited=0
+  while fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/cache/apt/archives/lock >/dev/null 2>&1; do
+    if [[ $waited -eq 0 ]]; then
+      info "Waiting for apt lock (another package manager is running)..."
+    fi
+    sleep 5
+    waited=$((waited + 5))
+    if [[ $waited -ge $max_wait ]]; then
+      warn "apt lock held for over ${max_wait}s. Continuing anyway (may fail)."
+      return 1
+    fi
+  done
+  return 0
+}
+
+apt_try_install_any() {
+  wait_for_apt_lock
+  local p
+  for p in "$@"; do
+    if $SUDO apt-get install -y --no-install-recommends "$p" >/dev/null 2>&1; then
+      ok "apt: installed ${p}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+apt_install_if_missing() {
+  local pkg="$1"
+  if dpkg -l "$pkg" 2>/dev/null | grep -q "^ii"; then
+    ok "apt: ${pkg} already installed"
+    return 0
+  fi
+  apt_install "$pkg"
+}
+
+# ============================================================
+# PER-TOOL INSTALL FUNCTIONS (preserved from original)
+# ============================================================
+
+# --- rtlamr (Go-based, cross-platform) ---
+install_rtlamr_from_source() {
+  info "Installing rtlamr from source (requires Go)..."
+
+  if ! cmd_exists go; then
+    if [[ "$OS" == "macos" ]]; then
+      info "Installing Go via Homebrew..."
+      brew_install go || { warn "Failed to install Go. Cannot install rtlamr."; return 1; }
+    else
+      info "Installing Go via apt..."
+      $SUDO apt-get install -y golang >/dev/null 2>&1 || { warn "Failed to install Go. Cannot install rtlamr."; return 1; }
+    fi
+  fi
+
+  export GOPATH="${GOPATH:-$HOME/go}"
+  export PATH="$GOPATH/bin:$PATH"
+  mkdir -p "$GOPATH/bin"
+
+  info "Building rtlamr..."
+  if go install github.com/bemasher/rtlamr@latest 2>/dev/null; then
+    if [[ -f "$GOPATH/bin/rtlamr" ]]; then
+      if [[ "$OS" == "macos" ]]; then
+        if [[ -w /usr/local/bin ]]; then
+          ln -sf "$GOPATH/bin/rtlamr" /usr/local/bin/rtlamr
+        else
+          $SUDO ln -sf "$GOPATH/bin/rtlamr" /usr/local/bin/rtlamr
+        fi
+      else
+        $SUDO ln -sf "$GOPATH/bin/rtlamr" /usr/local/bin/rtlamr
+      fi
+      ok "rtlamr installed successfully"
+    else
+      warn "rtlamr binary not found after build"
+      return 1
+    fi
+  else
+    warn "Failed to build rtlamr"
+    return 1
+  fi
+}
+
+# --- multimon-ng (macOS from source) ---
+install_multimon_ng_from_source_macos() {
+  info "multimon-ng not available via Homebrew. Building from source..."
+
+  brew_install cmake
+  brew_install libsndfile
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning multimon-ng..."
+    git clone --depth 1 https://github.com/EliasOenal/multimon-ng.git "$tmp_dir/multimon-ng" >/dev/null 2>&1 \
+      || { fail "Failed to clone multimon-ng"; exit 1; }
+
+    cd "$tmp_dir/multimon-ng"
+    info "Compiling multimon-ng..."
+    mkdir -p build && cd build
+    cmake .. >/dev/null 2>&1 || { fail "cmake failed for multimon-ng"; exit 1; }
+    make >/dev/null 2>&1 || { fail "make failed for multimon-ng"; exit 1; }
+
+    if [[ -w /usr/local/bin ]]; then
+      install -m 0755 multimon-ng /usr/local/bin/multimon-ng
+    else
+      refresh_sudo
+      $SUDO install -m 0755 multimon-ng /usr/local/bin/multimon-ng
+    fi
+    ok "multimon-ng installed successfully from source"
+  )
+}
+
+# --- dump1090 (macOS from source) ---
+install_dump1090_from_source_macos() {
+  info "dump1090 not available via Homebrew. Building from source..."
+
+  brew_install cmake
+  brew_install librtlsdr
+  brew_install pkg-config
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning FlightAware dump1090..."
+    git clone --depth 1 https://github.com/flightaware/dump1090.git "$tmp_dir/dump1090" >/dev/null 2>&1 \
+      || { warn "Failed to clone dump1090"; exit 1; }
+
+    cd "$tmp_dir/dump1090"
+    sed -i '' 's/-Werror//g' Makefile 2>/dev/null || true
+    info "Compiling dump1090..."
+    if make BLADERF=no RTLSDR=yes 2>&1 | tail -5; then
+      if [[ -w /usr/local/bin ]]; then
+        install -m 0755 dump1090 /usr/local/bin/dump1090
+      else
+        refresh_sudo
+        $SUDO install -m 0755 dump1090 /usr/local/bin/dump1090
+      fi
+      ok "dump1090 installed successfully from source"
+    else
+      warn "Failed to build dump1090. ADS-B decoding will not be available."
+    fi
+  )
+}
+
+# --- acarsdec (macOS from source) ---
+install_acarsdec_from_source_macos() {
+  info "acarsdec not available via Homebrew. Building from source..."
+
+  brew_install cmake
+  brew_install librtlsdr
+  brew_install libsndfile
+  brew_install pkg-config
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning acarsdec..."
+    git clone --depth 1 https://github.com/TLeconte/acarsdec.git "$tmp_dir/acarsdec" >/dev/null 2>&1 \
+      || { warn "Failed to clone acarsdec"; exit 1; }
+
+    cd "$tmp_dir/acarsdec"
+
+    # Replace deprecated -Ofast (all macOS, not just arm64)
+    if grep -q '\-Ofast' CMakeLists.txt 2>/dev/null; then
+      sed -i '' 's/-Ofast/-O3 -ffast-math/g' CMakeLists.txt
+      info "Patched deprecated -Ofast flag"
+    fi
+
+    # macOS doesn't have -march=native on arm64
+    if [[ "$(uname -m)" == "arm64" ]]; then
+      sed -i '' 's/ -march=native//g' CMakeLists.txt
+      info "Removed -march=native for Apple Silicon"
+    fi
+
+    # HOST_NAME_MAX is Linux-specific; macOS uses _POSIX_HOST_NAME_MAX
+    if grep -q 'HOST_NAME_MAX' acarsdec.c 2>/dev/null; then
+      sed -i '' '1i\
+#ifndef HOST_NAME_MAX\
+#define HOST_NAME_MAX 255\
+#endif
+' acarsdec.c
+      info "Patched HOST_NAME_MAX for macOS compatibility"
+    fi
+
+    if grep -q 'pthread_tryjoin_np' rtl.c 2>/dev/null; then
+      sed -i '' 's/pthread_tryjoin_np(\([^,]*\), NULL)/pthread_join(\1, NULL)/g' rtl.c
+      info "Patched pthread_tryjoin_np for macOS compatibility"
+    fi
+
+    if grep -q 'LIBACARS_LIBRARIES' CMakeLists.txt 2>/dev/null; then
+      sed -i '' 's/${LIBACARS_LIBRARIES}/${LIBACARS_LINK_LIBRARIES}/g' CMakeLists.txt
+      info "Patched libacars linking for macOS"
+    fi
+
+    mkdir -p build && cd build
+
+    HOMEBREW_PREFIX="$(brew --prefix)"
+    export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+    export CMAKE_PREFIX_PATH="${HOMEBREW_PREFIX}"
+
+    info "Compiling acarsdec..."
+    build_log="$tmp_dir/acarsdec-build.log"
+    if cmake .. -Drtl=ON \
+         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+         -DCMAKE_C_FLAGS="-I${HOMEBREW_PREFIX}/include" \
+         -DCMAKE_EXE_LINKER_FLAGS="-L${HOMEBREW_PREFIX}/lib" \
+         >"$build_log" 2>&1 \
+       && make >>"$build_log" 2>&1; then
+      if [[ -w /usr/local/bin ]]; then
+        install -m 0755 acarsdec /usr/local/bin/acarsdec
+      else
+        refresh_sudo
+        $SUDO install -m 0755 acarsdec /usr/local/bin/acarsdec
+      fi
+      ok "acarsdec installed successfully from source"
+    else
+      warn "Failed to build acarsdec. ACARS decoding will not be available."
+      warn "Build log (last 30 lines):"
+      tail -30 "$build_log" | while IFS= read -r line; do warn "  $line"; done
+    fi
+  )
+}
+
+# --- dumpvdl2 (macOS from source, with libacars) ---
+install_dumpvdl2_from_source_macos() {
+  info "Building dumpvdl2 from source (with libacars dependency)..."
+
+  brew_install cmake
+  brew_install librtlsdr
+  brew_install pkg-config
+  brew_install glib
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    HOMEBREW_PREFIX="$(brew --prefix)"
+    export PKG_CONFIG_PATH="${HOMEBREW_PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+    export CMAKE_PREFIX_PATH="${HOMEBREW_PREFIX}"
+
+    info "Cloning libacars..."
+    git clone --depth 1 https://github.com/szpajder/libacars.git "$tmp_dir/libacars" >/dev/null 2>&1 \
+      || { warn "Failed to clone libacars"; exit 1; }
+
+    cd "$tmp_dir/libacars"
+    mkdir -p build && cd build
+
+    info "Compiling libacars..."
+    build_log="$tmp_dir/libacars-build.log"
+    if cmake .. \
+         -DCMAKE_C_FLAGS="-I${HOMEBREW_PREFIX}/include" \
+         -DCMAKE_EXE_LINKER_FLAGS="-L${HOMEBREW_PREFIX}/lib" \
+         >"$build_log" 2>&1 \
+       && make >>"$build_log" 2>&1; then
+      if [[ -w /usr/local/lib ]]; then
+        make install >>"$build_log" 2>&1
+      else
+        refresh_sudo
+        $SUDO make install >>"$build_log" 2>&1
+      fi
+      ok "libacars installed"
+    else
+      warn "Failed to build libacars."
+      tail -20 "$build_log" | while IFS= read -r line; do warn "  $line"; done
+      exit 1
+    fi
+
+    info "Cloning dumpvdl2..."
+    git clone --depth 1 https://github.com/szpajder/dumpvdl2.git "$tmp_dir/dumpvdl2" >/dev/null 2>&1 \
+      || { warn "Failed to clone dumpvdl2"; exit 1; }
+
+    cd "$tmp_dir/dumpvdl2"
+    mkdir -p build && cd build
+
+    info "Compiling dumpvdl2..."
+    build_log="$tmp_dir/dumpvdl2-build.log"
+    if cmake .. \
+         -DCMAKE_C_FLAGS="-I${HOMEBREW_PREFIX}/include" \
+         -DCMAKE_EXE_LINKER_FLAGS="-L${HOMEBREW_PREFIX}/lib" \
+         >"$build_log" 2>&1 \
+       && make >>"$build_log" 2>&1; then
+      if [[ -w /usr/local/bin ]]; then
+        install -m 0755 src/dumpvdl2 /usr/local/bin/dumpvdl2
+      else
+        refresh_sudo
+        $SUDO install -m 0755 src/dumpvdl2 /usr/local/bin/dumpvdl2
+      fi
+      ok "dumpvdl2 installed successfully from source"
+    else
+      warn "Failed to build dumpvdl2. VDL2 decoding will not be available."
+      warn "Build log (last 30 lines):"
+      tail -30 "$build_log" | while IFS= read -r line; do warn "  $line"; done
+    fi
+  )
+}
+
+# --- AIS-catcher (macOS from source) ---
+install_aiscatcher_from_source_macos() {
+  info "AIS-catcher not available via Homebrew. Building from source..."
+
+  brew_install cmake
+  brew_install librtlsdr
+  brew_install curl
+  brew_install pkg-config
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning AIS-catcher..."
+    git clone --depth 1 https://github.com/jvde-github/AIS-catcher.git "$tmp_dir/AIS-catcher" >/dev/null 2>&1 \
+      || { warn "Failed to clone AIS-catcher"; exit 1; }
+
+    cd "$tmp_dir/AIS-catcher"
+    mkdir -p build && cd build
+
+    info "Compiling AIS-catcher..."
+    if cmake .. >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      if [[ -w /usr/local/bin ]]; then
+        install -m 0755 AIS-catcher /usr/local/bin/AIS-catcher
+      else
+        refresh_sudo
+        $SUDO install -m 0755 AIS-catcher /usr/local/bin/AIS-catcher
+      fi
+      ok "AIS-catcher installed successfully from source"
+    else
+      warn "Failed to build AIS-catcher. AIS vessel tracking will not be available."
+    fi
+  )
+}
+
+# --- SatDump (Debian from source) ---
+install_satdump_from_source_debian() {
+  info "Building SatDump v1.2.2 from source (weather satellite decoder)..."
+
+  apt_install build-essential git cmake pkg-config \
+    libpng-dev libtiff-dev libzstd-dev \
+    libsqlite3-dev libcurl4-openssl-dev zlib1g-dev libzmq3-dev libfftw3-dev
+
+  apt_try_install_any libvolk-dev libvolk2-dev \
+    || warn "libvolk not found — SatDump will build without VOLK acceleration"
+
+  for pkg in libjemalloc-dev libnng-dev libsoapysdr-dev libhackrf-dev liblimesuite-dev; do
+    $SUDO apt-get install -y --no-install-recommends "$pkg" >/dev/null 2>&1 \
+      || warn "${pkg} not available — skipping (SatDump can build without it)"
+  done
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning SatDump v1.2.2..."
+    git clone --depth 1 --branch 1.2.2 https://github.com/SatDump/SatDump.git "$tmp_dir/SatDump" >/dev/null 2>&1 \
+      || { warn "Failed to clone SatDump"; exit 1; }
+
+    cd "$tmp_dir/SatDump"
+
+    lua_utils="src-core/common/lua/lua_utils.cpp"
+    if [ -f "$lua_utils" ]; then
+      {
+        echo '#pragma GCC diagnostic push'
+        echo '#pragma GCC diagnostic ignored "-Wdeprecated"'
+        echo '#pragma GCC diagnostic ignored "-Wdeprecated-declarations"'
+        cat "$lua_utils"
+        echo
+        echo '#pragma GCC diagnostic pop'
+      } > "${lua_utils}.patched" && mv "${lua_utils}.patched" "$lua_utils"
+    fi
+
+    mkdir -p build && cd build
+
+    info "Compiling SatDump (this is a large C++ project and may take 10-30 minutes)..."
+    build_log="$tmp_dir/satdump-build.log"
+
+    (
+      while true; do
+        sleep 30
+        if [ -f "$build_log" ]; then
+          local_lines=$(wc -l < "$build_log" 2>/dev/null || echo 0)
+          printf "  [*] Still compiling SatDump... (%s lines of build output so far)\n" "$local_lines"
+        fi
+      done
+    ) &
+    progress_pid=$!
+
+    local arch_flags=""
+    if [[ "$(uname -m)" == "x86_64" ]]; then
+      arch_flags="-march=x86-64"
+    fi
+
+    if cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=OFF -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_C_FLAGS="$arch_flags" \
+        -DCMAKE_CXX_FLAGS="$arch_flags -Wno-template-body" .. >"$build_log" 2>&1 \
+        && make -j "$(nproc)" >>"$build_log" 2>&1; then
+      kill $progress_pid 2>/dev/null; wait $progress_pid 2>/dev/null
+      $SUDO make install >/dev/null 2>&1
+      $SUDO ldconfig
+
+      $SUDO mkdir -p /usr/local/lib/satdump/plugins
+      if [ -z "$(ls /usr/local/lib/satdump/plugins/*.so 2>/dev/null)" ]; then
+        for dir in /usr/local/lib/*/satdump/plugins /usr/lib/*/satdump/plugins /usr/lib/satdump/plugins; do
+          if [ -d "$dir" ] && [ -n "$(ls "$dir"/*.so 2>/dev/null)" ]; then
+            $SUDO ln -sf "$dir"/*.so /usr/local/lib/satdump/plugins/
+            break
+          fi
+        done
+      fi
+
+      ok "SatDump installed successfully."
+    else
+      kill $progress_pid 2>/dev/null; wait $progress_pid 2>/dev/null
+      warn "Failed to build SatDump from source. Weather satellite decoding will not be available."
+      warn "Build log (last 30 lines):"
+      tail -30 "$build_log" | while IFS= read -r line; do warn "  $line"; done
+    fi
+  )
+}
+
+# --- SatDump (macOS pre-built) ---
+install_satdump_macos() {
+  info "Installing SatDump v1.2.2 from pre-built release (weather satellite decoder)..."
+
+  local arch
+  arch="$(uname -m)"
+  local dmg_name
+  if [ "$arch" = "arm64" ]; then
+    dmg_name="SatDump-macOS-Silicon.dmg"
+  else
+    dmg_name="SatDump-macOS-Intel.dmg"
+  fi
+
+  local dmg_url="https://github.com/SatDump/SatDump/releases/download/1.2.2/${dmg_name}"
+  local install_dir="/usr/local/lib/satdump"
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'hdiutil detach "$tmp_dir/mnt" -quiet 2>/dev/null || true; rm -rf "$tmp_dir"' EXIT
+
+    info "Downloading ${dmg_name}..."
+    if ! curl -sL -o "$tmp_dir/satdump.dmg" "$dmg_url"; then
+      warn "Failed to download SatDump. Weather satellite decoding will not be available."
+      exit 1
+    fi
+
+    info "Installing SatDump..."
+    hdiutil attach "$tmp_dir/satdump.dmg" -nobrowse -quiet -mountpoint "$tmp_dir/mnt" \
+      || { warn "Failed to mount SatDump DMG"; exit 1; }
+
+    local app_dir="$tmp_dir/mnt/SatDump.app"
+    if [ ! -d "$app_dir" ]; then
+      warn "SatDump.app not found in DMG"
+      exit 1
+    fi
+
+    refresh_sudo
+    $SUDO mkdir -p "$install_dir"
+    $SUDO cp -R "$app_dir/Contents/MacOS/"* "$install_dir/"
+    $SUDO cp -R "$app_dir/Contents/Resources/"* "$install_dir/"
+
+    $SUDO tee /usr/local/bin/satdump >/dev/null <<'WRAPPER'
+#!/bin/sh
+exec /usr/local/lib/satdump/satdump "$@"
+WRAPPER
+    $SUDO chmod +x /usr/local/bin/satdump
+
+    hdiutil detach "$tmp_dir/mnt" -quiet 2>/dev/null
+
+    if /usr/local/lib/satdump/satdump 2>&1 | grep -q "Usage"; then
+      ok "SatDump v1.2.2 installed successfully."
+    else
+      warn "SatDump installed but may not work correctly."
+    fi
+  )
+}
+
+# --- radiosonde_auto_rx ---
+install_radiosonde_auto_rx() {
+  info "Installing radiosonde_auto_rx (weather balloon decoder)..."
+  local install_dir="/opt/radiosonde_auto_rx"
+  local project_dir="$(pwd)"
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning radiosonde_auto_rx..."
+    if ! git clone --depth 1 https://github.com/projecthorus/radiosonde_auto_rx.git "$tmp_dir/radiosonde_auto_rx"; then
+      warn "Failed to clone radiosonde_auto_rx"
+      exit 1
+    fi
+
+    info "Installing Python dependencies..."
+    cd "$tmp_dir/radiosonde_auto_rx/auto_rx"
+    if [ -x "$project_dir/venv/bin/pip" ]; then
+      "$project_dir/venv/bin/pip" install --quiet -r requirements.txt semver || {
+        warn "Failed to install radiosonde_auto_rx Python dependencies"
+        exit 1
+      }
+    else
+      pip3 install --quiet --break-system-packages -r requirements.txt semver 2>/dev/null \
+        || pip3 install --quiet -r requirements.txt semver || {
+        warn "Failed to install radiosonde_auto_rx Python dependencies"
+        exit 1
+      }
+    fi
+
+    info "Building radiosonde_auto_rx C decoders..."
+    if ! bash build.sh; then
+      warn "Failed to build radiosonde_auto_rx decoders"
+      exit 1
+    fi
+
+    info "Installing to ${install_dir}..."
+    refresh_sudo
+    $SUDO mkdir -p "$install_dir/auto_rx"
+    $SUDO cp -r . "$install_dir/auto_rx/"
+    $SUDO chmod +x "$install_dir/auto_rx/auto_rx.py"
+
+    ok "radiosonde_auto_rx installed to ${install_dir}"
+  )
+}
+
+# --- dump1090 (Debian from source) ---
+install_dump1090_from_source_debian() {
+  info "dump1090 not available via APT. Building from source (this may take a few minutes)..."
+
+  info "Installing build dependencies for dump1090..."
+  apt_install build-essential git pkg-config \
+    librtlsdr-dev libusb-1.0-0-dev \
+    libncurses-dev tcl-dev python3-dev
+
+  local JOBS
+  JOBS="$(nproc 2>/dev/null || echo 1)"
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap '{ [[ -n "${progress_pid:-}" ]] && kill "$progress_pid" 2>/dev/null && wait "$progress_pid" 2>/dev/null || true; }; rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning FlightAware dump1090..."
+    git clone --depth 1 https://github.com/flightaware/dump1090.git "$tmp_dir/dump1090" >/dev/null 2>&1 \
+      || { fail "Failed to clone FlightAware dump1090"; exit 1; }
+
+    cd "$tmp_dir/dump1090"
+    sed -i 's/-Werror//g' Makefile 2>/dev/null || true
+    info "Compiling FlightAware dump1090 (using ${JOBS} CPU cores)..."
+    build_log="$tmp_dir/dump1090-build.log"
+
+    (while true; do sleep 20; printf "  [*] Still compiling dump1090...\n"; done) &
+    progress_pid=$!
+
+    if make -j "$JOBS" BLADERF=no RTLSDR=yes >"$build_log" 2>&1; then
+      kill "$progress_pid" 2>/dev/null; wait "$progress_pid" 2>/dev/null || true; progress_pid=
+      $SUDO install -m 0755 dump1090 /usr/local/bin/dump1090
+      ok "dump1090 installed successfully (FlightAware)."
+      exit 0
+    fi
+
+    kill "$progress_pid" 2>/dev/null; wait "$progress_pid" 2>/dev/null || true; progress_pid=
+    warn "FlightAware build failed. Falling back to wiedehopf/readsb..."
+    warn "Build log (last 20 lines):"
+    tail -20 "$build_log" | while IFS= read -r line; do warn "  $line"; done
+
+    rm -rf "$tmp_dir/dump1090"
+    info "Cloning wiedehopf/readsb..."
+    git clone --depth 1 https://github.com/wiedehopf/readsb.git "$tmp_dir/dump1090" >/dev/null 2>&1 \
+      || { fail "Failed to clone wiedehopf/readsb"; exit 1; }
+
+    cd "$tmp_dir/dump1090"
+    info "Compiling readsb (using ${JOBS} CPU cores)..."
+    build_log="$tmp_dir/readsb-build.log"
+
+    (while true; do sleep 20; printf "  [*] Still compiling readsb...\n"; done) &
+    progress_pid=$!
+
+    if ! make -j "$JOBS" RTLSDR=yes >"$build_log" 2>&1; then
+      kill "$progress_pid" 2>/dev/null; wait "$progress_pid" 2>/dev/null || true; progress_pid=
+      warn "Build log (last 20 lines):"
+      tail -20 "$build_log" | while IFS= read -r line; do warn "  $line"; done
+      fail "Failed to build readsb from source (required)."
+      exit 1
+    fi
+
+    kill "$progress_pid" 2>/dev/null; wait "$progress_pid" 2>/dev/null || true; progress_pid=
+    $SUDO install -m 0755 readsb /usr/local/bin/dump1090
+    ok "dump1090 installed successfully (via readsb)."
+  )
+}
+
+# --- acarsdec (Debian from source) ---
+install_acarsdec_from_source_debian() {
+  info "acarsdec not available via APT. Building from source..."
+
+  apt_install build-essential git cmake \
+    librtlsdr-dev libusb-1.0-0-dev libsndfile1-dev
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning acarsdec..."
+    git clone --depth 1 https://github.com/TLeconte/acarsdec.git "$tmp_dir/acarsdec" >/dev/null 2>&1 \
+      || { warn "Failed to clone acarsdec"; exit 1; }
+
+    cd "$tmp_dir/acarsdec"
+    mkdir -p build && cd build
+
+    info "Compiling acarsdec..."
+    if cmake .. -Drtl=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      $SUDO install -m 0755 acarsdec /usr/local/bin/acarsdec
+      ok "acarsdec installed successfully."
+    else
+      warn "Failed to build acarsdec from source. ACARS decoding will not be available."
+    fi
+  )
+}
+
+# --- dumpvdl2 (Debian from source, with libacars) ---
+install_dumpvdl2_from_source_debian() {
+  info "Building dumpvdl2 from source (with libacars dependency)..."
+
+  apt_install build-essential git cmake \
+    librtlsdr-dev libusb-1.0-0-dev libglib2.0-dev libxml2-dev
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning libacars..."
+    git clone --depth 1 https://github.com/szpajder/libacars.git "$tmp_dir/libacars" >/dev/null 2>&1 \
+      || { warn "Failed to clone libacars"; exit 1; }
+
+    cd "$tmp_dir/libacars"
+    mkdir -p build && cd build
+
+    info "Compiling libacars..."
+    if cmake .. >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      $SUDO make install >/dev/null 2>&1
+      $SUDO ldconfig
+      ok "libacars installed"
+    else
+      warn "Failed to build libacars."
+      exit 1
+    fi
+
+    info "Cloning dumpvdl2..."
+    git clone --depth 1 https://github.com/szpajder/dumpvdl2.git "$tmp_dir/dumpvdl2" >/dev/null 2>&1 \
+      || { warn "Failed to clone dumpvdl2"; exit 1; }
+
+    cd "$tmp_dir/dumpvdl2"
+    mkdir -p build && cd build
+
+    info "Compiling dumpvdl2..."
+    if cmake .. >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      $SUDO install -m 0755 src/dumpvdl2 /usr/local/bin/dumpvdl2
+      ok "dumpvdl2 installed successfully."
+    else
+      warn "Failed to build dumpvdl2 from source. VDL2 decoding will not be available."
+    fi
+  )
+}
+
+# --- AIS-catcher (Debian from source) ---
+install_aiscatcher_from_source_debian() {
+  info "AIS-catcher not available via APT. Building from source..."
+
+  apt_install build-essential git cmake pkg-config \
+    librtlsdr-dev libusb-1.0-0-dev libcurl4-openssl-dev zlib1g-dev
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning AIS-catcher..."
+    git clone --depth 1 https://github.com/jvde-github/AIS-catcher.git "$tmp_dir/AIS-catcher" >/dev/null 2>&1 \
+      || { warn "Failed to clone AIS-catcher"; exit 1; }
+
+    cd "$tmp_dir/AIS-catcher"
+    mkdir -p build && cd build
+
+    info "Compiling AIS-catcher..."
+    if cmake .. >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      $SUDO install -m 0755 AIS-catcher /usr/local/bin/AIS-catcher
+      ok "AIS-catcher installed successfully."
+    else
+      warn "Failed to build AIS-catcher from source. AIS vessel tracking will not be available."
+    fi
+  )
+}
+
+# --- Ubertooth (Debian from source) ---
+install_ubertooth_from_source_debian() {
+  info "Building Ubertooth from source..."
+
+  apt_install build-essential git cmake libusb-1.0-0-dev pkg-config libbluetooth-dev
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning Ubertooth..."
+    git clone --depth 1 https://github.com/greatscottgadgets/ubertooth.git "$tmp_dir/ubertooth" >/dev/null 2>&1 \
+      || { warn "Failed to clone Ubertooth"; exit 1; }
+
+    cd "$tmp_dir/ubertooth/host"
+    mkdir -p build && cd build
+
+    info "Compiling Ubertooth..."
+    if cmake .. >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      $SUDO make install >/dev/null 2>&1
+      $SUDO ldconfig
+      ok "Ubertooth installed successfully from source."
+    else
+      warn "Failed to build Ubertooth from source."
+    fi
+  )
+}
+
+# --- RTL-SDR Blog drivers (Debian from source) ---
+install_rtlsdr_blog_drivers_debian() {
+  info "Installing RTL-SDR Blog drivers (improved V4 support)..."
+
+  apt_install build-essential git cmake libusb-1.0-0-dev pkg-config
+
+  (
+    tmp_dir="$(mktemp -d)"
+    trap 'rm -rf "$tmp_dir"' EXIT
+
+    info "Cloning RTL-SDR Blog driver fork..."
+    git clone https://github.com/rtlsdrblog/rtl-sdr-blog.git "$tmp_dir/rtl-sdr-blog" >/dev/null 2>&1 \
+      || { warn "Failed to clone RTL-SDR Blog drivers"; exit 1; }
+
+    cd "$tmp_dir/rtl-sdr-blog"
+    mkdir -p build && cd build
+
+    info "Compiling RTL-SDR Blog drivers..."
+    if cmake .. -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON >/dev/null 2>&1 && make >/dev/null 2>&1; then
+      $SUDO make install >/dev/null 2>&1
+      $SUDO ldconfig
+
+      if [[ -f ../rtl-sdr.rules ]]; then
+        $SUDO cp ../rtl-sdr.rules /etc/udev/rules.d/20-rtlsdr-blog.rules
+        $SUDO udevadm control --reload-rules || true
+        $SUDO udevadm trigger || true
+      fi
+
+      if [[ -d /etc/ld.so.conf.d ]]; then
+        echo '/usr/local/lib' | $SUDO tee /etc/ld.so.conf.d/00-local-first.conf >/dev/null
+      fi
+      $SUDO ldconfig
+
+      ok "RTL-SDR Blog drivers installed successfully."
+      info "These drivers provide improved support for RTL-SDR Blog V4 and other devices."
+      warn "Unplug and replug your RTL-SDR devices for the new drivers to take effect."
+    else
+      warn "Failed to build RTL-SDR Blog drivers. Using stock drivers."
+      warn "If you have an RTL-SDR Blog V4, you may need to install drivers manually."
+      warn "See: https://github.com/rtlsdrblog/rtl-sdr-blog"
+    fi
+  )
+
+}
+
+# --- udev rules (Debian) ---
+setup_udev_rules_debian() {
+  [[ -d /etc/udev/rules.d ]] || { warn "udev not found; skipping RTL-SDR udev rules."; return 0; }
+
+  local rules_file="/etc/udev/rules.d/20-rtlsdr.rules"
+  [[ -f "$rules_file" ]] && { ok "RTL-SDR udev rules already present: $rules_file"; return 0; }
+
+  info "Installing RTL-SDR udev rules..."
+  $SUDO tee "$rules_file" >/dev/null <<'EOF'
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2838", MODE="0666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2832", MODE="0666"
+EOF
+  $SUDO udevadm control --reload-rules || true
+  $SUDO udevadm trigger || true
+  ok "udev rules installed. Unplug/replug your RTL-SDR if connected."
+  echo
+}
+
+# --- Kernel driver blacklist (Debian) ---
+blacklist_kernel_drivers_debian() {
+  local blacklist_file="/etc/modprobe.d/blacklist-rtlsdr.conf"
+
+  if [[ -f "$blacklist_file" ]]; then
+    ok "RTL-SDR kernel driver blacklist already present"
+  else
+    info "Blacklisting conflicting DVB kernel drivers..."
+    $SUDO tee "$blacklist_file" >/dev/null <<'EOF'
+# Blacklist DVB-T drivers to allow rtl-sdr to access RTL2832U devices
+blacklist dvb_usb_rtl28xxu
+blacklist rtl2832
+blacklist rtl2830
+blacklist r820t
+EOF
+  fi
+
+  local unloaded=false
+  for mod in dvb_usb_rtl28xxu rtl2832 rtl2830 r820t; do
+    if lsmod | grep -q "^$mod"; then
+      $SUDO modprobe -r "$mod" 2>/dev/null || true
+      unloaded=true
+    fi
+  done
+  $unloaded && info "Unloaded conflicting DVB kernel modules from current session."
+
+  if cmd_exists update-initramfs; then
+    info "Updating initramfs to persist driver blacklist across reboots..."
+    $SUDO update-initramfs -u >/dev/null 2>&1 || true
+  fi
+
+  ok "Kernel drivers blacklisted. Unplug/replug your RTL-SDR if connected."
+  echo
+}
+
+# ============================================================
+# PROFILE-BASED INSTALL DISPATCHER
+# ============================================================
+
+# Per-tool install wrappers that call the right function per OS
+install_tool_rtl_sdr() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install librtlsdr
+  else
+    if ! $IS_DRAGONOS; then
+      # Handle librtlsdr package conflicts
+      if dpkg -l | grep -q "librtlsdr2"; then
+        info "Detected librtlsdr2 conflict - upgrading to librtlsdr0..."
+        $SUDO apt-get remove -y dump1090-mutability libgnuradio-osmosdr0.2.0t64 rtl-433 librtlsdr2 rtl-sdr 2>/dev/null || true
+        $SUDO apt-get autoremove -y 2>/dev/null || true
+        ok "Removed conflicting librtlsdr2 packages"
+      fi
+      if dpkg -l | grep -q "^.[^i].*rtl-sdr" || ! dpkg -l rtl-sdr 2>/dev/null | grep -q "^ii"; then
+        info "Removing broken rtl-sdr package..."
+        $SUDO dpkg --remove --force-remove-reinstreq rtl-sdr 2>/dev/null || true
+        $SUDO dpkg --purge --force-remove-reinstreq rtl-sdr 2>/dev/null || true
+      fi
+      if dpkg -l | grep -q "librtlsdr2"; then
+        info "Force removing librtlsdr2..."
+        $SUDO dpkg --remove --force-all librtlsdr2 2>/dev/null || true
+        $SUDO dpkg --purge --force-all librtlsdr2 2>/dev/null || true
+      fi
+      $SUDO dpkg --configure -a 2>/dev/null || true
+      $SUDO apt-get --fix-broken install -y 2>/dev/null || true
+    fi
+    apt_install_if_missing rtl-sdr
+  fi
+}
+
+install_tool_rtlsdr_blog() {
+  if [[ "$OS" == "debian" ]] && ! $IS_DRAGONOS; then
+    echo
+    info "RTL-SDR Blog drivers add V4 (R828D tuner) support and bias-tee improvements."
+    info "They are backward-compatible with all RTL-SDR devices."
+    if ask_yes_no "Install RTL-SDR Blog drivers? (recommended for V4 users, safe for all)" "y"; then
+      install_rtlsdr_blog_drivers_debian
+    else
+      warn "Skipping RTL-SDR Blog drivers. V4 devices may not work correctly."
+    fi
+  fi
+}
+
+install_tool_multimon_ng() {
+  if [[ "$OS" == "macos" ]]; then
+    if ! cmd_exists multimon-ng; then
+      install_multimon_ng_from_source_macos
+    else
+      ok "multimon-ng already installed"
+    fi
+  else
+    apt_install multimon-ng
+  fi
+}
+
+install_tool_rtl_433() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install rtl_433
+  else
+    apt_try_install_any rtl-433 rtl433 || warn "rtl-433 not available"
+  fi
+}
+
+install_tool_dump1090() {
+  if [[ "$OS" == "macos" ]]; then
+    if ! cmd_exists dump1090; then
+      (brew_install dump1090-mutability) || install_dump1090_from_source_macos || warn "dump1090 not available"
+    else
+      ok "dump1090 already installed"
+    fi
+  else
+    # Remove stale symlinks
+    local dump1090_path
+    dump1090_path="$(command -v dump1090 2>/dev/null || true)"
+    if [[ -n "$dump1090_path" ]] && [[ ! -x "$dump1090_path" ]]; then
+      info "Removing broken dump1090 symlink: $dump1090_path"
+      $SUDO rm -f "$dump1090_path"
+    fi
+    if ! cmd_exists dump1090 && ! cmd_exists dump1090-mutability; then
+      info "Checking for dump1090 APT packages..."
+      apt_try_install_any dump1090-fa dump1090-mutability dump1090 || true
+    fi
+    if ! cmd_exists dump1090; then
+      if cmd_exists dump1090-mutability; then
+        $SUDO ln -s "$(which dump1090-mutability)" /usr/local/sbin/dump1090
+      fi
+    fi
+    cmd_exists dump1090 || install_dump1090_from_source_debian
+  fi
+}
+
+install_tool_acarsdec() {
+  if [[ "$OS" == "macos" ]]; then
+    if ! cmd_exists acarsdec; then
+      (brew_install acarsdec) || install_acarsdec_from_source_macos || warn "acarsdec not available"
+    else
+      ok "acarsdec already installed"
+    fi
+  else
+    if ! cmd_exists acarsdec; then
+      install_acarsdec_from_source_debian
+    else
+      ok "acarsdec already installed"
+    fi
+  fi
+}
+
+install_tool_dumpvdl2() {
+  if [[ "$OS" == "macos" ]]; then
+    if ! cmd_exists dumpvdl2; then
+      install_dumpvdl2_from_source_macos || warn "dumpvdl2 not available. VDL2 decoding will not be available."
+    else
+      ok "dumpvdl2 already installed"
+    fi
+  else
+    if ! cmd_exists dumpvdl2; then
+      install_dumpvdl2_from_source_debian || warn "dumpvdl2 not available. VDL2 decoding will not be available."
+    else
+      ok "dumpvdl2 already installed"
+    fi
+  fi
+}
+
+install_tool_ffmpeg() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install ffmpeg
+  else
+    apt_install ffmpeg
+  fi
+}
+
+install_tool_gpsd() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install gpsd
+  else
+    apt_install gpsd gpsd-clients || true
+  fi
+}
+
+install_tool_hackrf() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install hackrf
+  else
+    apt_install hackrf || warn "hackrf tools not available"
+  fi
+}
+
+install_tool_rtlamr() {
+  if ! cmd_exists rtlamr; then
+    echo
+    info "rtlamr is used for utility meter monitoring (electric/gas/water meters)."
+    if ask_yes_no "Do you want to install rtlamr?"; then
+      install_rtlamr_from_source
+    else
+      warn "Skipping rtlamr installation. You can install it later if needed."
+    fi
+  else
+    ok "rtlamr already installed"
+  fi
+}
+
+install_tool_ais_catcher() {
+  if [[ "$OS" == "macos" ]]; then
+    if ! cmd_exists AIS-catcher && ! cmd_exists aiscatcher; then
+      (brew_install aiscatcher) || install_aiscatcher_from_source_macos || warn "AIS-catcher not available"
+    else
+      ok "AIS-catcher already installed"
+    fi
+  else
+    if ! cmd_exists AIS-catcher && ! cmd_exists aiscatcher; then
+      install_aiscatcher_from_source_debian
+    else
+      ok "AIS-catcher already installed"
+    fi
+  fi
+}
+
+install_tool_direwolf() {
+  if [[ "$OS" == "macos" ]]; then
+    (brew_install direwolf) || warn "direwolf not available via Homebrew"
+  else
+    apt_install direwolf || true
+  fi
+}
+
+install_tool_satdump() {
+  if ! cmd_exists satdump; then
+    echo
+    info "SatDump is used for weather satellite imagery (NOAA APT & Meteor LRPT)."
+    if ask_yes_no "Do you want to install SatDump?"; then
+      if [[ "$OS" == "macos" ]]; then
+        install_satdump_macos || warn "SatDump installation failed. Weather satellite decoding will not be available."
+      else
+        # Try system package first (available on Ubuntu 24.10+, Debian Trixie+)
+        if apt-cache show satdump >/dev/null 2>&1; then
+          info "SatDump is available as a system package — installing via apt..."
+          if apt_install satdump; then
+            ok "SatDump installed via apt."
+          else
+            warn "apt install failed — falling back to building from source..."
+            install_satdump_from_source_debian || warn "SatDump build failed. Weather satellite decoding will not be available."
+          fi
+        else
+          install_satdump_from_source_debian || warn "SatDump build failed. Weather satellite decoding will not be available."
+        fi
+      fi
+    else
+      warn "Skipping SatDump installation. You can install it later if needed."
+    fi
+  else
+    ok "SatDump already installed"
+  fi
+}
+
+install_tool_radiosonde() {
+  if ! cmd_exists auto_rx.py && [ ! -f /opt/radiosonde_auto_rx/auto_rx/auto_rx.py ] \
+     || { [ -f /opt/radiosonde_auto_rx/auto_rx/auto_rx.py ] && [ ! -f /opt/radiosonde_auto_rx/auto_rx/dft_detect ]; }; then
+    echo
+    info "radiosonde_auto_rx is used for weather balloon (radiosonde) tracking."
+    if ask_yes_no "Do you want to install radiosonde_auto_rx?"; then
+      install_radiosonde_auto_rx || warn "radiosonde_auto_rx installation failed. Radiosonde tracking will not be available."
+    else
+      warn "Skipping radiosonde_auto_rx. You can install it later if needed."
+    fi
+  else
+    ok "radiosonde_auto_rx already installed"
+  fi
+}
+
+install_tool_aircrack_ng() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install aircrack-ng
+  else
+    apt_install aircrack-ng || true
+  fi
+}
+
+install_tool_hcxdumptool() {
+  if [[ "$OS" == "debian" ]]; then
+    apt_install hcxdumptool || true
+  fi
+  # Not available on macOS
+}
+
+install_tool_hcxtools() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install hcxtools
+  else
+    apt_install hcxtools || true
+  fi
+}
+
+install_tool_bluez() {
+  if [[ "$OS" == "macos" ]]; then
+    warn "macOS note: hcitool/hciconfig are Linux (BlueZ) utilities and often unavailable on macOS."
+    info "TSCM BLE scanning uses bleak library (installed via pip) for manufacturer data detection."
+  else
+    apt_install bluez bluetooth || true
+  fi
+}
+
+install_tool_ubertooth() {
+  if ! cmd_exists ubertooth-btle; then
+    echo
+    info "Ubertooth is used for advanced Bluetooth packet sniffing with Ubertooth One hardware."
+    if ask_yes_no "Do you want to install Ubertooth tools?"; then
+      if [[ "$OS" == "macos" ]]; then
+        brew_install ubertooth || warn "Ubertooth not available via Homebrew"
+      else
+        apt_install libubertooth-dev ubertooth || install_ubertooth_from_source_debian
+      fi
+    else
+      warn "Skipping Ubertooth installation. You can install it later if needed."
+    fi
+  else
+    ok "Ubertooth already installed"
+  fi
+}
+
+install_tool_soapysdr() {
+  if [[ "$OS" == "macos" ]]; then
+    brew_install soapysdr
+  else
+    apt_install soapysdr-tools xtrx-dkms- || true
+  fi
+}
+
+# Install tools matching a profile bitmask
+install_profiles() {
+  local mask="$1"
+
+  need_sudo
+
+  # Prime sudo on macOS
+  if [[ "$OS" == "macos" ]] && [[ -n "${SUDO:-}" ]]; then
+    info "Some tools require sudo to install. You may be prompted for your password."
+    sudo -v || { fail "sudo authentication failed"; exit 1; }
+  fi
+
+  # Debian pre-flight
+  if [[ "$OS" == "debian" ]]; then
+    if $NON_INTERACTIVE; then
+      export DEBIAN_FRONTEND=noninteractive
+      export NEEDRESTART_MODE=a
+    elif [[ -t 0 ]]; then
+      export DEBIAN_FRONTEND=readline
+      export NEEDRESTART_MODE=a
+    else
+      export DEBIAN_FRONTEND=noninteractive
+      export NEEDRESTART_MODE=a
+    fi
+
+    wait_for_apt_lock
+    info "Updating APT package lists..."
+    if ! $SUDO apt-get update -y >/dev/null 2>&1; then
+      warn "apt-get update reported errors. Continuing anyway."
+    fi
+
+    # Install Python build tools (needed for venv)
+    apt_install python3-venv python3-pip python3-dev || true
+    info "Installing Python apt packages..."
+    $SUDO apt-get install -y python3-flask python3-requests python3-serial >/dev/null 2>&1 || true
+    $SUDO apt-get install -y python3-skyfield >/dev/null 2>&1 || true
+    $SUDO apt-get install -y python3-bleak >/dev/null 2>&1 || true
+  fi
+
+  if [[ "$OS" == "macos" ]]; then
+    ensure_brew
+  fi
+
+  # Count tools to install for progress bar
+  local tool_count=0
+  for i in "${!TOOL_KEYS[@]}"; do
+    local tool_mask
+    tool_mask=$(echo "${TOOL_ENTRIES[$i]}" | cut -d'|' -f1)
+    if (( (mask & tool_mask) != 0 )); then
+      ((tool_count++)) || true
+    fi
+  done
+  # Add Python venv + leaflet + udev/blacklist steps
+  TOTAL_STEPS=$((tool_count + 4))
+  CURRENT_STEP=0
+
+  # Install tools in a sensible order
+  local ordered_tools=(
+    rtl_sdr rtlsdr_blog multimon_ng rtl_433 ffmpeg gpsd
+    dump1090 acarsdec dumpvdl2 rtlamr hackrf
+    ais_catcher direwolf
+    satdump radiosonde
+    aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr
+  )
+
+  for key in "${ordered_tools[@]}"; do
+    local entry
+    entry=$(_tool_entry "$key") || continue
+    local tool_mask
+    tool_mask=$(echo "$entry" | cut -d'|' -f1)
+    local desc
+    desc=$(echo "$entry" | cut -d'|' -f3)
+
+    if (( (mask & tool_mask) != 0 )); then
+      progress "Installing ${desc}"
+      if tool_is_installed "$key" && [[ "$key" != "rtlsdr_blog" ]]; then
+        ok "${desc} — already installed"
+      else
+        "install_tool_${key}" || warn "Failed to install ${desc}"
+      fi
+    fi
+  done
+
+  # Python venv
+  install_python_deps
+
+  # Download leaflet-heat plugin
+  progress "Downloading leaflet-heat plugin"
+  if [ ! -f "static/vendor/leaflet-heat/leaflet-heat.js" ]; then
+    mkdir -p static/vendor/leaflet-heat
+    if curl -sL "https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" \
+        -o static/vendor/leaflet-heat/leaflet-heat.js; then
+      ok "leaflet-heat plugin downloaded"
+    else
+      warn "Failed to download leaflet-heat plugin. Heatmap will use CDN."
+    fi
+  else
+    ok "leaflet-heat plugin already present"
+  fi
+
+  # Debian post-install
+  if [[ "$OS" == "debian" ]]; then
+    progress "Configuring udev rules"
+    setup_udev_rules_debian
+
+    progress "Kernel driver configuration"
+    if $IS_DRAGONOS; then
+      info "DragonOS already has RTL-SDR drivers configured correctly."
+    elif [[ -f /etc/modprobe.d/blacklist-rtlsdr.conf ]]; then
+      ok "DVB kernel drivers already blacklisted"
+    else
+      echo
+      echo "The DVB-T kernel drivers conflict with RTL-SDR userspace access."
+      echo "Blacklisting them allows rtl_sdr tools to access the device."
+      if ask_yes_no "Blacklist conflicting kernel drivers?"; then
+        blacklist_kernel_drivers_debian
+      else
+        warn "Skipped kernel driver blacklist. RTL-SDR may not work without manual config."
+      fi
+    fi
+  fi
+
+  echo
+  ok "Profile installation complete!"
+}
+
+# Custom per-tool install (interactive checklist)
+install_custom() {
+  echo
+  echo -e "${BOLD}${CYAN}Custom Tool Selection${NC}"
+  draw_line 50
+
+  local ordered_tools=(
+    rtl_sdr multimon_ng rtl_433 dump1090 acarsdec dumpvdl2 ffmpeg gpsd rtlamr hackrf
+    ais_catcher direwolf
+    satdump radiosonde
+    aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr
+  )
+
+  local idx=1
+  local tool_indices=()
+  for key in "${ordered_tools[@]}"; do
+    local entry
+    entry=$(_tool_entry "$key") || continue
+    local desc
+    desc=$(echo "$entry" | cut -d'|' -f3)
+    local status=""
+    if tool_is_installed "$key"; then
+      status="${GREEN}[installed]${NC}"
+    else
+      status="${YELLOW}[missing]${NC}"
+    fi
+    echo -e "  ${BOLD}${idx})${NC} ${desc} ${status}"
+    tool_indices+=("$key")
+    ((idx++)) || true
+  done
+
+  draw_line 50
+  echo -n "Select tools to install (space-separated numbers, or 'a' for all): "
+  local selection
+  read -r selection
+
+  if [[ "$selection" == "a" ]]; then
+    install_profiles $PROFILE_FULL
+    return
+  fi
+
+  need_sudo
+
+  if [[ "$OS" == "debian" ]]; then
+    if $NON_INTERACTIVE; then
+      export DEBIAN_FRONTEND=noninteractive
+      export NEEDRESTART_MODE=a
+    elif [[ -t 0 ]]; then
+      export DEBIAN_FRONTEND=readline
+      export NEEDRESTART_MODE=a
+    else
+      export DEBIAN_FRONTEND=noninteractive
+      export NEEDRESTART_MODE=a
+    fi
+    info "Updating APT package lists..."
+    $SUDO apt-get update -y >/dev/null 2>&1 || true
+    apt_install python3-venv python3-pip python3-dev || true
+  fi
+
+  if [[ "$OS" == "macos" ]]; then
+    ensure_brew
+  fi
+
+  for sel in $selection; do
+    local idx_zero=$((sel - 1))
+    if [[ $idx_zero -ge 0 ]] && [[ $idx_zero -lt ${#tool_indices[@]} ]]; then
+      local key="${tool_indices[$idx_zero]}"
+      local entry
+      entry=$(_tool_entry "$key") || continue
+      local desc
+      desc=$(echo "$entry" | cut -d'|' -f3)
+      info "Installing ${desc}..."
+      "install_tool_${key}" || warn "Failed to install ${desc}"
+    fi
+  done
+
+  # Always ensure venv
+  TOTAL_STEPS=2
+  CURRENT_STEP=0
+  install_python_deps
+
+  echo
+  ok "Custom installation complete!"
+}
+
+# ============================================================
+# SYSTEM HEALTH CHECK
+# ============================================================
+do_health_check() {
+  echo
+  echo -e "${BOLD}${CYAN}System Health Check${NC}"
+  draw_line 50
+
+  local pass=0 warns=0 fails=0
+
+  # Tool checks
+  info "Checking installed tools..."
+  for i in "${!TOOL_KEYS[@]}"; do
+    local key="${TOOL_KEYS[$i]}"
+    local entry="${TOOL_ENTRIES[$i]}"
+    local check_cmd
+    check_cmd=$(echo "$entry" | cut -d'|' -f2)
+    local desc
+    desc=$(echo "$entry" | cut -d'|' -f3)
+
+    [[ "$check_cmd" == "SKIP" ]] && continue
+
+    if tool_is_installed "$key"; then
+      ok "${desc}"
+      ((pass++)) || true
+    else
+      warn "${desc} — not installed"
+      ((warns++)) || true
+    fi
+  done
+
+  # SDR device detection
+  echo
+  info "SDR device detection..."
+  if cmd_exists rtl_test; then
+    local rtl_output
+    if cmd_exists timeout; then
+      rtl_output=$(timeout 3 rtl_test -d 0 2>&1 || true)
+    elif cmd_exists gtimeout; then
+      rtl_output=$(gtimeout 3 rtl_test -d 0 2>&1 || true)
+    else
+      # No timeout command (common on macOS) — run with background kill
+      rtl_test -d 0 > /tmp/.rtl_test_out 2>&1 & local rtl_pid=$!
+      sleep 2
+      kill "$rtl_pid" 2>/dev/null; wait "$rtl_pid" 2>/dev/null
+      rtl_output=$(cat /tmp/.rtl_test_out 2>/dev/null || true)
+      rm -f /tmp/.rtl_test_out
+    fi
+    if echo "$rtl_output" | grep -q "Found\|Using device"; then
+      ok "RTL-SDR device detected"
+      ((pass++)) || true
+    else
+      warn "No RTL-SDR device found (is one plugged in?)"
+      ((warns++)) || true
+    fi
+  else
+    warn "rtl_test not available — cannot check SDR devices"
+    ((warns++)) || true
+  fi
+
+  if cmd_exists hackrf_info; then
+    if hackrf_info 2>&1 | grep -q "Found HackRF"; then
+      ok "HackRF device detected"
+      ((pass++)) || true
+    else
+      warn "No HackRF device found"
+      ((warns++)) || true
+    fi
+  fi
+
+  # Port availability
+  echo
+  info "Port availability..."
+  for port in 5050 30003; do
+    if ! ss -tlnp 2>/dev/null | grep -q ":${port} " && \
+       ! lsof -iTCP:"${port}" -sTCP:LISTEN 2>/dev/null | grep -q "$port"; then
+      ok "Port ${port} — available"
+      ((pass++)) || true
+    else
+      warn "Port ${port} — in use"
+      ((warns++)) || true
+    fi
+  done
+
+  # Permission checks
+  echo
+  info "Permissions..."
+  if [[ "$(id -u)" -eq 0 ]]; then
+    ok "Running as root"
+    ((pass++)) || true
+  else
+    if groups 2>/dev/null | grep -qE "plugdev|dialout"; then
+      ok "User in plugdev/dialout groups"
+      ((pass++)) || true
+    else
+      warn "User not in plugdev/dialout groups (may need sudo for SDR access)"
+      ((warns++)) || true
+    fi
+  fi
+
+  # Python venv
+  echo
+  info "Python environment..."
+  if [[ -d venv ]] && [[ -x venv/bin/python ]]; then
+    ok "Python venv exists"
+    ((pass++)) || true
+
+    if venv/bin/python -s -c "import flask; import requests; import flask_compress; import flask_wtf" 2>/dev/null; then
+      ok "Critical Python packages (flask, requests, flask-compress, flask-wtf) — OK"
+      ((pass++)) || true
+    else
+      fail "Critical Python packages missing in venv"
+      ((fails++)) || true
+    fi
+  else
+    fail "Python venv not found — run Install first"
+    ((fails++)) || true
+  fi
+
+  # .env file
+  echo
+  info "Configuration..."
+  if [[ -f .env ]]; then
+    local var_count
+    var_count=$(grep -cE '^[A-Z_]+=' .env 2>/dev/null || echo 0)
+    ok ".env file present (${var_count} variables)"
+    ((pass++)) || true
+  else
+    warn ".env file not found (using defaults)"
+    ((warns++)) || true
+  fi
+
+  # PostgreSQL
+  if [[ "$(read_env_var INTERCEPT_ADSB_HISTORY_ENABLED)" == "true" ]]; then
+    info "PostgreSQL..."
+    local db_host db_port db_name db_user
+    db_host=$(read_env_var INTERCEPT_ADSB_DB_HOST "localhost")
+    db_port=$(read_env_var INTERCEPT_ADSB_DB_PORT "5432")
+    db_name=$(read_env_var INTERCEPT_ADSB_DB_NAME "intercept_adsb")
+    db_user=$(read_env_var INTERCEPT_ADSB_DB_USER "intercept")
+    if cmd_exists psql; then
+      if PGPASSWORD="$(read_env_var INTERCEPT_ADSB_DB_PASS)" psql -h "$db_host" -p "$db_port" -U "$db_user" -d "$db_name" -c "SELECT 1" >/dev/null 2>&1; then
+        ok "PostgreSQL connection — OK"
+        ((pass++)) || true
+      else
+        fail "PostgreSQL connection failed"
+        ((fails++)) || true
+      fi
+    else
+      warn "psql not installed — cannot verify PostgreSQL"
+      ((warns++)) || true
+    fi
+  fi
+
+  # Summary
+  echo
+  draw_line 50
+  echo -e "  ${GREEN}Pass: ${pass}${NC}  ${YELLOW}Warn: ${warns}${NC}  ${RED}Fail: ${fails}${NC}"
+  draw_line 50
+  echo
+
+  if [[ $fails -gt 0 ]]; then
+    fail "Health check completed with failures. Run Install to fix."
+  elif [[ $warns -gt 0 ]]; then
+    warn "Health check completed with warnings."
+  else
+    ok "All checks passed!"
+  fi
+}
+
+# ============================================================
+# DATABASE SETUP (PostgreSQL for ADS-B History)
+# ============================================================
+do_postgres_setup() {
+  echo
+  echo -e "${BOLD}${CYAN}Database Setup — ADS-B History (PostgreSQL)${NC}"
+  draw_line 55
+
+  need_sudo
+
+  # Check/install PostgreSQL
+  if ! cmd_exists psql; then
+    info "PostgreSQL client (psql) not found."
+    if [[ "$OS" == "debian" ]]; then
+      if ask_yes_no "Install PostgreSQL via apt?" "y"; then
+        info "Installing PostgreSQL (this may take a moment)..."
+        $SUDO apt-get install -y postgresql postgresql-client >/dev/null 2>&1 || {
+          fail "Failed to install PostgreSQL"
+          return 1
+        }
+        ok "PostgreSQL installed"
+      else
+        fail "PostgreSQL is required for ADS-B history."
+        return 1
+      fi
+    elif [[ "$OS" == "macos" ]]; then
+      if ask_yes_no "Install PostgreSQL via Homebrew?" "y"; then
+        brew_install postgresql@16 || brew_install postgresql || {
+          fail "Failed to install PostgreSQL"
+          return 1
+        }
+        ok "PostgreSQL installed"
+      else
+        fail "PostgreSQL is required for ADS-B history."
+        return 1
+      fi
+    fi
+  else
+    ok "PostgreSQL client found"
+  fi
+
+  # Start PostgreSQL service if not running
+  if [[ "$OS" == "debian" ]]; then
+    if ! $SUDO systemctl is-active --quiet postgresql 2>/dev/null; then
+      info "Starting PostgreSQL service..."
+      $SUDO systemctl start postgresql || $SUDO service postgresql start || true
+      $SUDO systemctl enable postgresql 2>/dev/null || true
+    fi
+    ok "PostgreSQL service running"
+  elif [[ "$OS" == "macos" ]]; then
+    if ! pg_isready -q 2>/dev/null; then
+      info "Starting PostgreSQL..."
+      brew services start postgresql@16 2>/dev/null || brew services start postgresql 2>/dev/null || true
+      sleep 2
+    fi
+    if pg_isready -q 2>/dev/null; then
+      ok "PostgreSQL running"
+    else
+      warn "PostgreSQL may not be running. Check: brew services list"
+    fi
+  fi
+
+  # Prompt for credentials
+  echo
+  local db_host db_port db_name db_user db_pass
+
+  read -r -p "Database host [localhost]: " db_host
+  db_host="${db_host:-localhost}"
+
+  read -r -p "Database port [5432]: " db_port
+  db_port="${db_port:-5432}"
+
+  read -r -p "Database name [intercept_adsb]: " db_name
+  db_name="${db_name:-intercept_adsb}"
+
+  read -r -p "Database user [intercept]: " db_user
+  db_user="${db_user:-intercept}"
+
+  read -r -s -p "Database password [intercept]: " db_pass
+  echo
+  db_pass="${db_pass:-intercept}"
+
+  # Create user + database
+  info "Creating database user and database..."
+  if [[ "$OS" == "debian" ]]; then
+    # Use postgres superuser
+    $SUDO -u postgres psql -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${db_user}') THEN CREATE ROLE ${db_user} WITH LOGIN PASSWORD '${db_pass}'; END IF; END \$\$;" 2>/dev/null || {
+      warn "Failed to create user (may already exist)"
+    }
+    $SUDO -u postgres psql -c "SELECT 1 FROM pg_database WHERE datname = '${db_name}'" 2>/dev/null | grep -q 1 || \
+      $SUDO -u postgres createdb -O "$db_user" "$db_name" 2>/dev/null || {
+      warn "Failed to create database (may already exist)"
+    }
+    $SUDO -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};" 2>/dev/null || true
+  elif [[ "$OS" == "macos" ]]; then
+    psql postgres -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${db_user}') THEN CREATE ROLE ${db_user} WITH LOGIN PASSWORD '${db_pass}'; END IF; END \$\$;" 2>/dev/null || true
+    psql postgres -c "SELECT 1 FROM pg_database WHERE datname = '${db_name}'" 2>/dev/null | grep -q 1 || \
+      createdb -O "$db_user" "$db_name" 2>/dev/null || true
+    psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};" 2>/dev/null || true
+  fi
+  ok "Database and user configured"
+
+  # Create tables + indexes (schema from utils/adsb_history.py)
+  info "Creating ADS-B schema (tables + indexes)..."
+  PGPASSWORD="$db_pass" psql -h "$db_host" -p "$db_port" -U "$db_user" -d "$db_name" <<'SQL'
+CREATE TABLE IF NOT EXISTS adsb_messages (
+    id BIGSERIAL PRIMARY KEY,
+    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    msg_time TIMESTAMPTZ,
+    logged_time TIMESTAMPTZ,
+    icao TEXT NOT NULL,
+    msg_type SMALLINT,
+    callsign TEXT,
+    altitude INTEGER,
+    speed INTEGER,
+    heading INTEGER,
+    vertical_rate INTEGER,
+    lat DOUBLE PRECISION,
+    lon DOUBLE PRECISION,
+    squawk TEXT,
+    session_id TEXT,
+    aircraft_id TEXT,
+    flight_id TEXT,
+    raw_line TEXT,
+    source_host TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_adsb_messages_icao_time ON adsb_messages (icao, received_at);
+CREATE INDEX IF NOT EXISTS idx_adsb_messages_received_at ON adsb_messages (received_at);
+CREATE INDEX IF NOT EXISTS idx_adsb_messages_msg_time ON adsb_messages (msg_time);
+
+CREATE TABLE IF NOT EXISTS adsb_snapshots (
+    id BIGSERIAL PRIMARY KEY,
+    captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    icao TEXT NOT NULL,
+    callsign TEXT,
+    registration TEXT,
+    type_code TEXT,
+    type_desc TEXT,
+    altitude INTEGER,
+    speed INTEGER,
+    heading INTEGER,
+    vertical_rate INTEGER,
+    lat DOUBLE PRECISION,
+    lon DOUBLE PRECISION,
+    squawk TEXT,
+    source_host TEXT,
+    snapshot JSONB
+);
+CREATE INDEX IF NOT EXISTS idx_adsb_snapshots_icao_time ON adsb_snapshots (icao, captured_at);
+CREATE INDEX IF NOT EXISTS idx_adsb_snapshots_captured_at ON adsb_snapshots (captured_at);
+
+CREATE TABLE IF NOT EXISTS adsb_sessions (
+    id BIGSERIAL PRIMARY KEY,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ,
+    device_index INTEGER,
+    sdr_type TEXT,
+    remote_host TEXT,
+    remote_port INTEGER,
+    start_source TEXT,
+    stop_source TEXT,
+    started_by TEXT,
+    stopped_by TEXT,
+    notes TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_adsb_sessions_started_at ON adsb_sessions (started_at);
+CREATE INDEX IF NOT EXISTS idx_adsb_sessions_active ON adsb_sessions (ended_at);
+SQL
+
+  if [[ $? -eq 0 ]]; then
+    ok "ADS-B schema created successfully"
+  else
+    fail "Failed to create ADS-B schema"
+    return 1
+  fi
+
+  # Write to .env
+  info "Writing database configuration to .env..."
+  write_env_var "INTERCEPT_ADSB_HISTORY_ENABLED" "true"
+  write_env_var "INTERCEPT_ADSB_DB_HOST" "$db_host"
+  write_env_var "INTERCEPT_ADSB_DB_PORT" "$db_port"
+  write_env_var "INTERCEPT_ADSB_DB_NAME" "$db_name"
+  write_env_var "INTERCEPT_ADSB_DB_USER" "$db_user"
+  write_env_var "INTERCEPT_ADSB_DB_PASS" "$db_pass"
+  ok ".env updated with ADS-B database settings"
+
+  # Test connection
+  info "Testing database connection..."
+  if PGPASSWORD="$db_pass" psql -h "$db_host" -p "$db_port" -U "$db_user" -d "$db_name" -c "SELECT COUNT(*) FROM adsb_messages;" >/dev/null 2>&1; then
+    ok "Database connection test passed"
+  else
+    fail "Database connection test failed"
+  fi
+
+  # Check psycopg2
+  if [[ -x venv/bin/python ]]; then
+    if ! venv/bin/python -c "import psycopg2" 2>/dev/null; then
+      info "Installing psycopg2-binary in venv..."
+      venv/bin/python -m pip install psycopg2-binary >/dev/null 2>&1 || warn "Failed to install psycopg2-binary"
+    fi
+    ok "psycopg2-binary available in venv"
+  fi
+
+  echo
+  ok "PostgreSQL setup complete! ADS-B history is now enabled."
+}
+
+# ============================================================
+# ENVIRONMENT CONFIGURATOR
+# ============================================================
+do_env_config() {
+  echo
+  echo -e "${BOLD}${CYAN}Environment Configurator${NC}"
+  draw_line 50
+
+  local categories=(
+    "Server"
+    "SDR Defaults"
+    "ADS-B"
+    "Observer Location"
+    "Weather Satellite"
+    "Radiosonde"
+    "Logging & Updates"
+  )
+
+  echo
+  for i in "${!categories[@]}"; do
+    echo -e "  ${BOLD}$((i+1)))${NC} ${categories[$i]}"
+  done
+  echo -e "  ${BOLD}0)${NC} Back"
+  draw_line 50
+  echo -n "Select category: "
+  local cat_choice
+  read -r cat_choice
+
+  case "$cat_choice" in
+    1) env_edit_category "Server" \
+         "INTERCEPT_HOST|Host to bind|0.0.0.0" \
+         "INTERCEPT_PORT|Port|5050" \
+         "INTERCEPT_DEBUG|Debug mode (true/false)|false" \
+         "INTERCEPT_HTTPS|Enable HTTPS (true/false)|false" ;;
+    2) env_edit_category "SDR Defaults" \
+         "INTERCEPT_PROCESS_TIMEOUT|Process timeout (seconds)|5" \
+         "INTERCEPT_SOCKET_TIMEOUT|Socket timeout (seconds)|5" \
+         "INTERCEPT_SSE_TIMEOUT|SSE timeout (seconds)|1" ;;
+    3) env_edit_category "ADS-B" \
+         "INTERCEPT_ADSB_SBS_PORT|SBS data port|30003" \
+         "INTERCEPT_ADSB_UPDATE_INTERVAL|Update interval (seconds)|1.0" \
+         "INTERCEPT_ADSB_AUTO_START|Auto-start ADS-B (true/false)|false" \
+         "INTERCEPT_ADSB_HISTORY_ENABLED|Enable history DB (true/false)|false" \
+         "INTERCEPT_ADSB_DB_HOST|Database host|localhost" \
+         "INTERCEPT_ADSB_DB_PORT|Database port|5432" \
+         "INTERCEPT_ADSB_DB_NAME|Database name|intercept_adsb" \
+         "INTERCEPT_ADSB_DB_USER|Database user|intercept" \
+         "INTERCEPT_ADSB_DB_PASS|Database password|intercept" ;;
+    4) env_edit_category "Observer Location" \
+         "INTERCEPT_SHARED_OBSERVER_LOCATION|Enable shared location (true/false)|true" \
+         "INTERCEPT_DEFAULT_LAT|Default latitude|0.0" \
+         "INTERCEPT_DEFAULT_LON|Default longitude|0.0" ;;
+    5) env_edit_category "Weather Satellite" \
+         "INTERCEPT_WEATHER_SAT_GAIN|SDR gain|40.0" \
+         "INTERCEPT_WEATHER_SAT_SAMPLE_RATE|Sample rate (Hz)|2400000" \
+         "INTERCEPT_WEATHER_SAT_MIN_ELEVATION|Minimum elevation (degrees)|15.0" \
+         "INTERCEPT_WEATHER_SAT_PREDICTION_HOURS|Prediction window (hours)|24" ;;
+    6) env_edit_category "Radiosonde" \
+         "INTERCEPT_RADIOSONDE_FREQ_MIN|Min frequency (MHz)|400.0" \
+         "INTERCEPT_RADIOSONDE_FREQ_MAX|Max frequency (MHz)|406.0" \
+         "INTERCEPT_RADIOSONDE_GAIN|SDR gain|40.0" \
+         "INTERCEPT_RADIOSONDE_UDP_PORT|UDP port|55673" ;;
+    7) env_edit_category "Logging & Updates" \
+         "INTERCEPT_UPDATE_CHECK_ENABLED|Enable update checks (true/false)|true" \
+         "INTERCEPT_UPDATE_CHECK_INTERVAL_HOURS|Check interval (hours)|6" ;;
+    0|"") return ;;
+    *) warn "Invalid selection" ;;
+  esac
+}
+
+env_edit_category() {
+  local cat_name="$1"; shift
+  echo
+  echo -e "${BOLD}${cat_name} Settings${NC}"
+  draw_line 50
+
+  local vars=("$@")
+  for var_spec in "${vars[@]}"; do
+    local var_name desc default_val current_val
+    var_name=$(echo "$var_spec" | cut -d'|' -f1)
+    desc=$(echo "$var_spec" | cut -d'|' -f2)
+    default_val=$(echo "$var_spec" | cut -d'|' -f3)
+    current_val=$(read_env_var "$var_name" "$default_val")
+
+    echo -e "  ${DIM}${desc}${NC}"
+    read -r -p "  ${var_name} [${current_val}]: " new_val
+    new_val="${new_val:-$current_val}"
+
+    if [[ "$new_val" != "$current_val" ]]; then
+      write_env_var "$var_name" "$new_val"
+      ok "  Updated ${var_name}=${new_val}"
+    fi
+  done
+  echo
+  ok "Settings saved to .env"
+}
+
+# ============================================================
+# UPDATE TOOLS
+# ============================================================
+do_update_tools() {
+  echo
+  echo -e "${BOLD}${CYAN}Update Source-Built Tools${NC}"
+  draw_line 50
+
+  local updatable_tools=()
+  local updatable_names=()
+
+  # Check which source-built tools are installed
+  local source_tools=(
+    "dump1090|dump1090|install_tool_dump1090"
+    "acarsdec|acarsdec|install_tool_acarsdec"
+    "dumpvdl2|dumpvdl2|install_tool_dumpvdl2"
+    "AIS-catcher|AIS-catcher aiscatcher|install_tool_ais_catcher"
+    "SatDump|satdump|install_tool_satdump"
+    "radiosonde_auto_rx|auto_rx.py|install_tool_radiosonde"
+    "rtlamr|rtlamr|install_rtlamr_from_source"
+    "Ubertooth|ubertooth-btle|install_tool_ubertooth"
+  )
+
+  local idx=1
+  for entry in "${source_tools[@]}"; do
+    local name cmds func
+    name=$(echo "$entry" | cut -d'|' -f1)
+    cmds=$(echo "$entry" | cut -d'|' -f2)
+    func=$(echo "$entry" | cut -d'|' -f3)
+
+    local installed=false
+    for cmd in $cmds; do
+      if cmd_exists "$cmd"; then
+        installed=true
+        break
+      fi
+    done
+    # Special case for radiosonde
+    if [[ "$name" == "radiosonde_auto_rx" ]] && [[ -f /opt/radiosonde_auto_rx/auto_rx/auto_rx.py ]]; then
+      installed=true
+    fi
+
+    if $installed; then
+      echo -e "  ${BOLD}${idx})${NC} ${name} ${GREEN}[installed]${NC}"
+      updatable_tools+=("$func")
+      updatable_names+=("$name")
+      ((idx++)) || true
+    fi
+  done
+
+  if [[ ${#updatable_tools[@]} -eq 0 ]]; then
+    warn "No source-built tools found to update."
+    return
+  fi
+
+  echo -e "  ${BOLD}a)${NC} Update all"
+  draw_line 50
+  echo -n "Select tools to update (space-separated numbers, or 'a' for all): "
+  local selection
+  read -r selection
+
+  need_sudo
+
+  if [[ "$selection" == "a" ]]; then
+    for i in "${!updatable_tools[@]}"; do
+      info "Updating ${updatable_names[$i]}..."
+      "${updatable_tools[$i]}" || warn "Failed to update ${updatable_names[$i]}"
+    done
+  else
+    for sel in $selection; do
+      local idx_zero=$((sel - 1))
+      if [[ $idx_zero -ge 0 ]] && [[ $idx_zero -lt ${#updatable_tools[@]} ]]; then
+        info "Updating ${updatable_names[$idx_zero]}..."
+        "${updatable_tools[$idx_zero]}" || warn "Failed to update ${updatable_names[$idx_zero]}"
+      fi
+    done
+  fi
+
+  echo
+  ok "Update complete!"
+}
+
+# ============================================================
+# UNINSTALL / CLEANUP
+# ============================================================
+do_uninstall() {
+  echo
+  echo -e "${BOLD}${CYAN}Uninstall / Cleanup${NC}"
+  draw_line 50
+  echo -e "  ${BOLD}1)${NC} Remove Python venv only"
+  echo -e "  ${BOLD}2)${NC} Remove compiled binaries (/usr/local/bin)"
+  echo -e "  ${BOLD}3)${NC} Remove data/ directory"
+  echo -e "  ${BOLD}4)${NC} Remove .env file"
+  echo -e "  ${BOLD}5)${NC} Remove instance/ databases"
+  echo -e "  ${BOLD}6)${NC} Full cleanup (all of the above)"
+  echo -e "  ${BOLD}0)${NC} Back"
+  draw_line 50
+  echo -n "Select option: "
+  local choice
+  read -r choice
+
+  case "$choice" in
+    1)
+      if ask_yes_no "Remove venv/ directory?"; then
+        rm -rf venv/
+        ok "venv/ removed"
+      fi
+      ;;
+    2)
+      need_sudo
+      if ask_yes_no "Remove compiled binaries from /usr/local/bin?"; then
+        local bins=(dump1090 acarsdec dumpvdl2 AIS-catcher satdump rtlamr multimon-ng)
+        for bin in "${bins[@]}"; do
+          if [[ -f "/usr/local/bin/$bin" ]]; then
+            $SUDO rm -f "/usr/local/bin/$bin"
+            ok "Removed /usr/local/bin/$bin"
+          fi
+        done
+        if [[ -d /usr/local/lib/satdump ]]; then
+          $SUDO rm -rf /usr/local/lib/satdump
+          ok "Removed /usr/local/lib/satdump"
+        fi
+        if [[ -d /opt/radiosonde_auto_rx ]]; then
+          $SUDO rm -rf /opt/radiosonde_auto_rx
+          ok "Removed /opt/radiosonde_auto_rx"
+        fi
+      fi
+      ;;
+    3)
+      if ask_yes_no "Remove data/ directory? This deletes decoded images and captures."; then
+        rm -rf data/
+        ok "data/ removed"
+      fi
+      ;;
+    4)
+      if ask_yes_no "Remove .env file?"; then
+        rm -f .env
+        ok ".env removed"
+      fi
+      ;;
+    5)
+      if ask_yes_no "Remove instance/ directory? This deletes local databases."; then
+        rm -rf instance/
+        ok "instance/ removed"
+      fi
+      ;;
+    6)
+      echo
+      fail "WARNING: This will remove ALL INTERCEPT local data."
+      if ask_yes_no "Are you sure? This cannot be undone."; then
+        if ask_yes_no "FINAL CONFIRMATION: Delete venv, data, .env, instance, and compiled binaries?"; then
+          need_sudo
+          rm -rf venv/ data/ .env instance/
+          local bins=(dump1090 acarsdec dumpvdl2 AIS-catcher satdump rtlamr multimon-ng)
+          for bin in "${bins[@]}"; do
+            $SUDO rm -f "/usr/local/bin/$bin" 2>/dev/null || true
+          done
+          $SUDO rm -rf /usr/local/lib/satdump 2>/dev/null || true
+          $SUDO rm -rf /opt/radiosonde_auto_rx 2>/dev/null || true
+          ok "Full cleanup complete"
+        fi
+      fi
+      ;;
+    0|"") return ;;
+    *) warn "Invalid selection" ;;
+  esac
+}
+
+# ============================================================
+# VIEW STATUS
+# ============================================================
+do_view_status() {
+  echo
+  echo -e "${BOLD}${CYAN}Tool Status${NC}"
+  draw_line 70
+  printf "  ${BOLD}%-20s %-12s %-10s${NC}\n" "Tool" "Status" "Profile"
+  draw_line 70
+
+  local ordered_tools=(
+    rtl_sdr multimon_ng rtl_433 dump1090 acarsdec dumpvdl2 ffmpeg gpsd rtlamr hackrf
+    ais_catcher direwolf
+    satdump radiosonde
+    aircrack_ng hcxdumptool hcxtools bluez ubertooth soapysdr
+  )
+
+  for key in "${ordered_tools[@]}"; do
+    local entry
+    entry=$(_tool_entry "$key") || continue
+    local tool_mask desc status_str profile_str
+    tool_mask=$(echo "$entry" | cut -d'|' -f1)
+    desc=$(echo "$entry" | cut -d'|' -f3)
+    profile_str=$(profile_name "$tool_mask")
+
+    if tool_is_installed "$key"; then
+      status_str="${GREEN}installed${NC}"
+    else
+      status_str="${YELLOW}missing${NC}"
+    fi
+
+    printf "  %-20s " "$desc"
+    echo -ne "$status_str"
+    # Pad after color codes
+    local pad=$((12 - 9)) # "installed" or "missing" is ~9 chars
+    printf '%*s' $pad ''
+    echo -e "${DIM}${profile_str}${NC}"
+  done
+
+  draw_line 70
+
+  # Python venv
+  echo
+  if [[ -d venv ]] && [[ -x venv/bin/python ]]; then
+    ok "Python venv: present"
+  else
+    warn "Python venv: not found"
+  fi
+
+  # .env
+  if [[ -f .env ]]; then
+    local count
+    count=$(grep -cE '^[A-Z_]+=' .env 2>/dev/null || echo 0)
+    ok ".env file: ${count} variables configured"
+  else
+    warn ".env file: not present"
+  fi
+
+  # PostgreSQL
+  if [[ "$(read_env_var INTERCEPT_ADSB_HISTORY_ENABLED)" == "true" ]]; then
+    ok "ADS-B History: enabled (PostgreSQL)"
+  else
+    info "ADS-B History: not configured"
+  fi
+
+  echo
+}
+
+# ============================================================
+# FIRST-TIME WIZARD
+# ============================================================
+do_wizard() {
+  echo
+  echo -e "${BOLD}${CYAN}Welcome to INTERCEPT Lab Setup!${NC}"
+  echo
+  info "Detected OS: ${OS}"
+  $IS_DRAGONOS && warn "DragonOS detected (safe mode enabled)"
+  echo
+
+  if $IS_DRAGONOS; then
+    echo "  DragonOS has many tools pre-installed."
+    echo "  This wizard will set up the Python environment and any missing tools."
+    echo
+  else
+    echo "  This wizard will install SDR tools and set up the Python environment."
+    echo "  Choose which tool profiles to install below."
+    echo
+  fi
+
+  if ! ask_yes_no "Continue with setup?" "y"; then
+    info "Setup cancelled."
+    exit 0
+  fi
+
+  # Profile selection
+  if $IS_DRAGONOS; then
+    # DragonOS: just do Python + any missing core tools
+    info "Installing Python environment and checking tools..."
+    install_profiles $PROFILE_FULL
+  else
+    show_profile_menu
+    local selection
+    read -r selection
+
+    if [[ -z "$selection" ]]; then
+      selection="5" # Default to Full SIGINT
+    fi
+
+    local mask
+    mask=$(selections_to_mask "$selection")
+
+    if [[ $mask -eq -1 ]]; then
+      install_custom
+    else
+      # Show pre-flight summary
+      echo
+      info "Installation Summary:"
+      echo "  OS: $OS"
+      echo "  Profiles: $(profile_name $mask)"
+      echo
+
+      if ! ask_yes_no "Proceed with installation?" "y"; then
+        info "Installation cancelled."
+        return
+      fi
+
+      install_profiles "$mask"
+    fi
+  fi
+
+  # Final summary
+  echo
+  check_tools
+
+  echo "============================================"
+  echo
+  echo "To start INTERCEPT Lab:"
+  echo "  sudo ./start.sh"
+  echo
+  echo "Or for quick local dev:"
+  echo "  sudo -E venv/bin/python intercept.py"
+  echo
+  echo "Then open http://localhost:5050 in your browser"
+  echo
+  echo "============================================"
+
+  if [[ "${#missing_required[@]}" -eq 0 ]]; then
+    ok "All REQUIRED tools are installed."
+  else
+    fail "Missing REQUIRED tools:"
+    for t in "${missing_required[@]}"; do echo "  - $t"; done
+    echo
+    if [[ "$OS" == "macos" ]]; then
+      warn "macOS note: bluetoothctl/hcitool/hciconfig are Linux (BlueZ) tools and unavailable on macOS."
+      warn "Bluetooth functionality will be limited. Other features should work."
+    fi
+  fi
+
+  if [[ "${#missing_recommended[@]}" -gt 0 ]]; then
+    echo
+    warn "Missing RECOMMENDED tools (some features will not work):"
+    for t in "${missing_recommended[@]}"; do echo "  - $t"; done
+    echo
+    warn "Install these for full functionality"
+  fi
+
+  # Optional: configure .env
+  echo
+  prompt_install_intercept_service
+
+  if ask_yes_no "Configure environment settings (.env)?"; then
+    do_env_config
+  fi
+
+  # Optional: PostgreSQL setup
+  echo
+  if ask_yes_no "Set up PostgreSQL for ADS-B history tracking?"; then
+    do_postgres_setup
+  fi
+
+  # Health check
+  echo
+  info "Running health check..."
+  do_health_check
+}
+
+# ============================================================
+# MAIN MENU LOOP
+# ============================================================
+run_menu() {
+  while true; do
+    show_main_menu
+    local choice
+    read -r choice
+    case "$choice" in
+      1)
+        show_profile_menu
+        local selection
+        read -r selection
+        if [[ -z "$selection" ]]; then
+          continue
+        fi
+        local mask
+        mask=$(selections_to_mask "$selection")
+        if [[ $mask -eq -1 ]]; then
+          install_custom
+        elif [[ $mask -gt 0 ]]; then
+          install_profiles "$mask"
+        fi
+        ;;
+      2) do_health_check ;;
+      3) do_postgres_setup ;;
+      4) do_update_tools ;;
+      5) do_env_config ;;
+      6) do_uninstall ;;
+      7) do_view_status ;;
+      0|"")
+        echo
+        ok "Goodbye!"
+        exit 0
+        ;;
+      *) warn "Invalid selection. Try again." ;;
+    esac
+  done
+}
+
+# ============================================================
+# CLI ARGUMENT PARSING
+# ============================================================
+parse_args() {
+  for arg in "$@"; do
+    case "$arg" in
+      --non-interactive)
+        NON_INTERACTIVE=true
+        ;;
+      --profile=*)
+        CLI_PROFILES="${arg#--profile=}"
+        ;;
+      --health-check)
+        CLI_ACTION="health-check"
+        ;;
+      --postgres-setup)
+        CLI_ACTION="postgres-setup"
+        ;;
+      --menu)
+        CLI_ACTION="menu"
+        ;;
+      --help|-h)
+        echo "INTERCEPT Lab Setup Script"
+        echo ""
+        echo "Usage: ./setup.sh [OPTIONS]"
+        echo ""
+        echo "Options:"
+        echo "  --non-interactive    Install Full SIGINT profile without prompts"
+        echo "  --profile=LIST       Install specific profiles (comma-separated)"
+        echo "                       Profiles: core, maritime, weather, security, full"
+        echo "  --health-check       Run system health check and exit"
+        echo "  --postgres-setup     Run PostgreSQL database setup and exit"
+        echo "  --menu               Force interactive menu (even on first run)"
+        echo "  -h, --help           Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  ./setup.sh                           # First run: wizard, else: menu"
+        echo "  ./setup.sh --non-interactive          # Headless full install"
+        echo "  ./setup.sh --profile=core,weather     # Install specific profiles"
+        echo "  ./setup.sh --health-check             # Check system health"
+        exit 0
+        ;;
+      *)
+        ;;
+    esac
+  done
+}
+
+# Convert comma-separated profile names to bitmask
+profiles_to_mask() {
+  local profiles="$1"
+  local mask=0
+  IFS=',' read -ra parts <<< "$profiles"
+  for p in "${parts[@]}"; do
+    case "$p" in
+      core)     mask=$((mask | PROFILE_CORE)) ;;
+      maritime) mask=$((mask | PROFILE_MARITIME)) ;;
+      weather)  mask=$((mask | PROFILE_WEATHER)) ;;
+      security) mask=$((mask | PROFILE_SECURITY)) ;;
+      full)     mask=$PROFILE_FULL ;;
+      *) warn "Unknown profile: $p" ;;
+    esac
+  done
+  echo $mask
+}
+
+# ============================================================
+# MAIN ENTRY POINT
+# ============================================================
+main() {
+  show_banner
+  parse_args "$@"
+
+  detect_os
+  detect_dragonos
+
+  # Handle CLI actions
+  if [[ "$CLI_ACTION" == "health-check" ]]; then
+    do_health_check
+    exit 0
+  fi
+
+  if [[ "$CLI_ACTION" == "postgres-setup" ]]; then
+    do_postgres_setup
+    exit 0
+  fi
+
+  # Handle --profile= flag
+  if [[ -n "$CLI_PROFILES" ]]; then
+    local mask
+    mask=$(profiles_to_mask "$CLI_PROFILES")
+    if [[ $mask -gt 0 ]]; then
+      install_profiles "$mask"
+      check_tools
+    fi
+    exit 0
+  fi
+
+  # Handle --non-interactive (backwards compatible: install everything)
+  if $NON_INTERACTIVE; then
+    install_profiles $PROFILE_FULL
+    check_tools
+    echo "============================================"
+    echo "To start INTERCEPT Lab: sudo ./start.sh"
+    if systemd_available; then
+      echo "Optional service: sudo systemctl enable --now intercept-lab.service"
+    fi
+    echo "============================================"
+    exit 0
+  fi
+
+  # Force menu mode
+  if [[ "$CLI_ACTION" == "menu" ]]; then
+    run_menu
+    exit 0
+  fi
+
+  # Auto-detect: wizard for first run, menu for subsequent
+  if [[ ! -d venv ]]; then
+    do_wizard
+  else
+    run_menu
+  fi
+}
+
+main "$@"
+
+# Clear traps before exiting to prevent spurious errors during cleanup
+trap - ERR EXIT
+exit 0

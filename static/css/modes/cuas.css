@@ -1,0 +1,229 @@
+/* C-UAS (Counter-UAS) Mode Styles */
+
+/* ── Threat level strip ── */
+.cuas-threat-strip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+}
+
+.cuas-threat-level {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.cuas-threat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    flex-shrink: 0;
+}
+
+.cuas-threat-level.clear       { color: var(--accent-cyan); }
+.cuas-threat-level.possible    { color: var(--accent-warn); }
+.cuas-threat-level.probable    { color: #ff6b00; }
+.cuas-threat-level.confirmed   { color: var(--accent-danger); }
+
+.cuas-threat-level.clear     .cuas-threat-dot { background: var(--accent-cyan); }
+.cuas-threat-level.possible  .cuas-threat-dot { background: var(--accent-warn); }
+.cuas-threat-level.probable  .cuas-threat-dot { background: #ff6b00; }
+.cuas-threat-level.confirmed .cuas-threat-dot { background: var(--accent-danger); }
+
+.cuas-threat-meta {
+    color: var(--text-secondary);
+    font-size: 10px;
+    margin-left: auto;
+}
+
+/* ── Subtool tabs ── */
+.cuas-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.cuas-tabs::-webkit-scrollbar { display: none; }
+
+.cuas-tab {
+    padding: 6px 12px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.cuas-tab:hover { color: var(--text-primary); }
+.cuas-tab.active {
+    color: var(--accent-cyan);
+    border-bottom-color: var(--accent-cyan);
+}
+
+/* ── Subtool panel ── */
+.cuas-subtool-panel { display: none; }
+.cuas-subtool-panel.active { display: block; }
+
+.cuas-subtool-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.cuas-subtool-status {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.cuas-subtool-status.running  { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+.cuas-subtool-status.stopped  { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+.cuas-subtool-status.error    { background: rgba(232,58,58,0.15); color: var(--accent-danger); }
+
+/* ── Detection table ── */
+.cuas-detections-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    font-family: var(--font-mono);
+}
+
+.cuas-detections-table th {
+    text-align: left;
+    color: var(--text-dim);
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.cuas-detections-table td {
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.cuas-detections-table tr:hover td { background: var(--bg-elevated); }
+
+/* confidence badges */
+.cuas-confidence {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.cuas-confidence.low       { background: rgba(255,255,255,0.07); color: var(--text-dim); }
+.cuas-confidence.medium    { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+.cuas-confidence.high      { background: rgba(232,180,0,0.15); color: var(--accent-warn); }
+.cuas-confidence.confirmed { background: rgba(232,58,58,0.18); color: var(--accent-danger); }
+
+/* detection type badges */
+.cuas-det-type {
+    font-size: 9px;
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* ── Threat board ── */
+.cuas-threat-board {
+    margin-top: 16px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+}
+
+.cuas-threat-board-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+/* ── Control buttons ── */
+.cuas-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.cuas-btn {
+    padding: 5px 10px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+.cuas-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.cuas-btn.primary { border-color: var(--accent-cyan); color: var(--accent-cyan); background: var(--accent-cyan-dim); }
+.cuas-btn.danger  { border-color: var(--accent-danger); color: var(--accent-danger); }
+
+/* ── Empty state ── */
+.cuas-empty {
+    text-align: center;
+    padding: 24px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: var(--font-mono);
+}
+
+/* ── Scan mode selector ── */
+.cuas-scan-mode-group {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.cuas-scan-mode-btn {
+    padding: 4px 10px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.cuas-scan-mode-btn.active,
+.cuas-scan-mode-btn:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-dim);
+}

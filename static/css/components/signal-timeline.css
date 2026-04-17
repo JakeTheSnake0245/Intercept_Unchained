@@ -1,0 +1,569 @@
+/**
+ * Signal Activity Timeline Component
+ * Lightweight visualization for RF signal presence over time
+ * Used for TSCM sweeps and investigative analysis
+ */
+
+/* ============================================
+   TIMELINE CONTAINER
+   ============================================ */
+.signal-timeline {
+    background: var(--bg-card, #1a1a1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+}
+
+.signal-timeline.collapsed .signal-timeline-body {
+    display: none;
+}
+
+.signal-timeline.collapsed .signal-timeline-header {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.signal-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.signal-timeline-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.signal-timeline-body {
+    padding: 0 12px 12px 12px;
+    border-top: 1px solid var(--border-color, #333);
+}
+
+.signal-timeline-collapse-icon {
+    margin-right: 8px;
+    font-size: 10px;
+}
+
+.signal-timeline.collapsed .signal-timeline-collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.signal-timeline-header-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--text-dim, #666);
+}
+
+.signal-timeline-header-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.signal-timeline-header-stat .stat-value {
+    color: var(--text-primary, #fff);
+    font-weight: 500;
+}
+
+.signal-timeline-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary, #888);
+}
+
+.signal-timeline-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.signal-timeline-btn {
+    background: var(--bg-secondary, #252525);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-secondary, #888);
+    font-size: 9px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.signal-timeline-btn:hover {
+    background: var(--bg-elevated, #2a2a2a);
+    color: var(--text-primary, #fff);
+}
+
+.signal-timeline-btn.active {
+    background: var(--accent-cyan, #4a9eff);
+    color: var(--text-inverse);
+    border-color: var(--accent-cyan, #4a9eff);
+}
+
+/* Time window selector */
+.signal-timeline-window {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    color: var(--text-dim, #666);
+}
+
+.signal-timeline-window select {
+    background: var(--bg-secondary, #252525);
+    border: 1px solid var(--border-color, #333);
+    color: var(--text-primary, #fff);
+    font-size: 9px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-family: inherit;
+}
+
+/* ============================================
+   TIME AXIS
+   ============================================ */
+.signal-timeline-axis {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 80px 0 100px;
+    margin-bottom: 8px;
+    font-size: 9px;
+    color: var(--text-dim, #666);
+}
+
+.signal-timeline-axis-label {
+    position: relative;
+}
+
+.signal-timeline-axis-label::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 1px;
+    height: 4px;
+    background: var(--border-color, #333);
+}
+
+/* ============================================
+   SWIMLANES
+   ============================================ */
+.signal-timeline-lanes {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 160px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+.signal-timeline-lanes::-webkit-scrollbar {
+    width: 6px;
+}
+
+.signal-timeline-lanes::-webkit-scrollbar-track {
+    background: var(--bg-secondary, #252525);
+    border-radius: 3px;
+}
+
+.signal-timeline-lanes::-webkit-scrollbar-thumb {
+    background: var(--border-color, #444);
+    border-radius: 3px;
+}
+
+.signal-timeline-lanes::-webkit-scrollbar-thumb:hover {
+    background: var(--text-dim, #666);
+}
+
+.signal-timeline-lane {
+    display: flex;
+    align-items: stretch;
+    min-height: 36px;
+    background: var(--bg-secondary, #252525);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.signal-timeline-lane:hover {
+    background: var(--bg-elevated, #2a2a2a);
+}
+
+.signal-timeline-lane.expanded {
+    min-height: auto;
+}
+
+.signal-timeline-lane.baseline {
+    opacity: 0.5;
+}
+
+.signal-timeline-lane.baseline:hover {
+    opacity: 0.8;
+}
+
+/* Signal label */
+.signal-timeline-label {
+    width: 130px;
+    min-width: 130px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    border-right: 1px solid var(--border-color, #333);
+    overflow: hidden;
+}
+
+.signal-timeline-freq {
+    color: var(--text-primary, #fff);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.signal-timeline-name {
+    color: var(--text-dim, #666);
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Status indicator */
+.signal-timeline-status {
+    width: 4px;
+    min-width: 4px;
+}
+
+.signal-timeline-status[data-status="new"] {
+    background: var(--signal-new, #3b82f6);
+}
+
+.signal-timeline-status[data-status="baseline"] {
+    background: var(--signal-baseline, #6b7280);
+}
+
+.signal-timeline-status[data-status="burst"] {
+    background: var(--signal-burst, #f59e0b);
+}
+
+.signal-timeline-status[data-status="flagged"] {
+    background: var(--signal-emergency, #ef4444);
+}
+
+.signal-timeline-status[data-status="gone"] {
+    background: var(--text-dim, #666);
+}
+
+/* ============================================
+   TRACK (where bars are drawn)
+   ============================================ */
+.signal-timeline-track {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    min-height: 36px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.signal-timeline-track-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Grid lines */
+.signal-timeline-grid {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-color, #333);
+    opacity: 0.3;
+}
+
+/* ============================================
+   SIGNAL BARS
+   ============================================ */
+.signal-timeline-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 16px;
+    min-width: 2px;
+    border-radius: 2px;
+}
+
+/* Strength variants (height) */
+.signal-timeline-bar[data-strength="1"] { height: 6px; }
+.signal-timeline-bar[data-strength="2"] { height: 10px; }
+.signal-timeline-bar[data-strength="3"] { height: 14px; }
+.signal-timeline-bar[data-strength="4"] { height: 18px; }
+.signal-timeline-bar[data-strength="5"] { height: 22px; }
+
+/* Status colors */
+.signal-timeline-bar[data-status="new"] {
+    background: var(--signal-new, #3b82f6);
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
+}
+
+.signal-timeline-bar[data-status="baseline"] {
+    background: var(--signal-baseline, #6b7280);
+}
+
+.signal-timeline-bar[data-status="burst"] {
+    background: var(--signal-burst, #f59e0b);
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+.signal-timeline-bar[data-status="flagged"] {
+    background: var(--signal-emergency, #ef4444);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.signal-timeline-lane:hover .signal-timeline-bar {
+    opacity: 0.9;
+}
+
+/* ============================================
+   EXPANDED VIEW (tick marks)
+   ============================================ */
+.signal-timeline-ticks {
+    display: none;
+    position: relative;
+    height: 24px;
+    margin-top: 4px;
+    border-top: 1px solid var(--border-color, #333);
+    padding-top: 4px;
+}
+
+.signal-timeline-lane.expanded .signal-timeline-ticks {
+    display: block;
+}
+
+.signal-timeline-tick {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    background: var(--accent-cyan, #4a9eff);
+}
+
+.signal-timeline-tick[data-strength="1"] { height: 4px; }
+.signal-timeline-tick[data-strength="2"] { height: 8px; }
+.signal-timeline-tick[data-strength="3"] { height: 12px; }
+.signal-timeline-tick[data-strength="4"] { height: 16px; }
+.signal-timeline-tick[data-strength="5"] { height: 20px; }
+
+/* ============================================
+   ANNOTATIONS
+   ============================================ */
+.signal-timeline-annotations {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-color, #333);
+    max-height: 60px;
+    overflow-y: auto;
+}
+
+.signal-timeline-annotation {
+    padding: 3px 6px;
+    font-size: 9px;
+    margin-bottom: 2px;
+}
+
+.signal-timeline-annotation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--text-secondary, #888);
+    background: var(--bg-secondary, #252525);
+    border-radius: 3px;
+    margin-bottom: 4px;
+}
+
+.signal-timeline-annotation-icon {
+    font-size: 12px;
+}
+
+.signal-timeline-annotation[data-type="new"] {
+    border-left: 2px solid var(--signal-new, #3b82f6);
+}
+
+.signal-timeline-annotation[data-type="burst"] {
+    border-left: 2px solid var(--signal-burst, #f59e0b);
+}
+
+.signal-timeline-annotation[data-type="pattern"] {
+    border-left: 2px solid var(--accent-cyan, #4a9eff);
+}
+
+.signal-timeline-annotation[data-type="flagged"] {
+    border-left: 2px solid var(--signal-emergency, #ef4444);
+    color: var(--signal-emergency, #ef4444);
+}
+
+/* ============================================
+   TOOLTIP
+   ============================================ */
+.signal-timeline-tooltip {
+    position: fixed;
+    z-index: 1000;
+    background: var(--bg-elevated, #2a2a2a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 10px;
+    color: var(--text-primary, #fff);
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 220px;
+}
+
+.signal-timeline-tooltip-header {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--accent-cyan, #4a9eff);
+}
+
+.signal-timeline-tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--text-secondary, #888);
+}
+
+.signal-timeline-tooltip-row span:last-child {
+    color: var(--text-primary, #fff);
+}
+
+/* ============================================
+   STATS ROW
+   ============================================ */
+.signal-timeline-stats {
+    width: 50px;
+    min-width: 50px;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    font-size: 9px;
+    color: var(--text-dim, #666);
+    border-left: 1px solid var(--border-color, #333);
+}
+
+.signal-timeline-stat-count {
+    color: var(--text-primary, #fff);
+    font-weight: 500;
+}
+
+.signal-timeline-stat-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.signal-timeline-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-dim, #666);
+    font-size: 11px;
+}
+
+.signal-timeline-empty-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+/* ============================================
+   LEGEND - compact inline version
+   ============================================ */
+.signal-timeline-legend {
+    display: none; /* Hide by default - status colors are self-explanatory */
+}
+
+.signal-timeline-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.signal-timeline-legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+}
+
+.signal-timeline-legend-dot.new { background: var(--signal-new, #3b82f6); }
+.signal-timeline-legend-dot.baseline { background: var(--signal-baseline, #6b7280); }
+.signal-timeline-legend-dot.burst { background: var(--signal-burst, #f59e0b); }
+.signal-timeline-legend-dot.flagged { background: var(--signal-emergency, #ef4444); }
+
+/* ============================================
+   NOW MARKER
+   ============================================ */
+.signal-timeline-now {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent-green, #22c55e);
+    z-index: 5;
+}
+
+.signal-timeline-now::after {
+    content: 'NOW';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--accent-green, #22c55e);
+    font-weight: 600;
+}
+
+/* ============================================
+   MARKER (first seen indicator)
+   ============================================ */
+.signal-timeline-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 8px solid var(--signal-new, #3b82f6);
+    z-index: 4;
+}
+
+.signal-timeline-marker::after {
+    content: attr(data-label);
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: var(--signal-new, #3b82f6);
+    white-space: nowrap;
+}

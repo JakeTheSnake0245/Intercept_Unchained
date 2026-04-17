@@ -1,0 +1,19 @@
+/* SIGINT Mode — inherits cuas.css tab/table patterns */
+/* Protocol badges */
+.sigint-proto {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.sigint-proto.keyfob   { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+.sigint-proto.tpms     { background: var(--accent-green-dim); color: var(--accent-green); }
+.sigint-proto.pager    { background: rgba(232,180,0,0.12); color: var(--accent-warn); }
+.sigint-proto.pmr      { background: rgba(232,58,58,0.12); color: var(--accent-danger); }
+.sigint-proto.ism      { background: rgba(255,255,255,0.06); color: var(--text-secondary); }
+.sigint-proto.unknown  { background: rgba(255,255,255,0.04); color: var(--text-dim); }
+
+#sigintStatusDot.running { background: var(--status-active); }

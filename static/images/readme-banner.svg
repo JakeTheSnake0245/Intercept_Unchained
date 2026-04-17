@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0,212,255,0.025)" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="glow1" cx="75%" cy="30%" r="35%">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="25%" cy="70%" r="30%">
+      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#00ff88" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="300" fill="#0a0a0f"/>
+  <rect width="1200" height="300" fill="url(#grid)"/>
+  <rect width="1200" height="300" fill="url(#glow1)"/>
+  <rect width="1200" height="300" fill="url(#glow2)"/>
+
+  <!-- Logo -->
+  <g transform="translate(340, 60) scale(1.0)">
+    <path d="M15 30 Q5 50, 15 70" stroke="#00d4ff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M22 35 Q14 50, 22 65" stroke="#00d4ff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M29 40 Q23 50, 29 60" stroke="#00d4ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M85 30 Q95 50, 85 70" stroke="#00d4ff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M78 35 Q86 50, 78 65" stroke="#00d4ff" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M71 40 Q77 50, 71 60" stroke="#00d4ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="50" cy="22" r="7" fill="#00ff88"/>
+    <rect x="43" y="35" width="14" height="45" rx="2" fill="#00d4ff"/>
+    <rect x="36" y="35" width="28" height="5" rx="1" fill="#00d4ff"/>
+    <rect x="36" y="75" width="28" height="5" rx="1" fill="#00d4ff"/>
+  </g>
+
+  <!-- Title: branded "i" glyph + NTERCEPT text -->
+  <g transform="translate(476, 78) scale(0.76)">
+    <circle cx="50" cy="18" r="6" fill="#00ff88"/>
+    <rect x="44" y="30" width="12" height="45" rx="2" fill="#00d4ff"/>
+    <rect x="38" y="30" width="24" height="4" rx="1" fill="#00d4ff"/>
+    <rect x="38" y="71" width="24" height="4" rx="1" fill="#00d4ff"/>
+  </g>
+  <text x="524" y="135" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="64" font-weight="800" letter-spacing="-1.5" fill="white">NTERCEPT LAB</text>
+
+  <!-- Subtitle -->
+  <text x="490" y="170" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="18" font-weight="300" fill="rgba(255,255,255,0.35)">
+    RF Research Workspace
+  </text>
+
+  <!-- Feature dots -->
+  <g font-family="'Courier New',monospace" font-size="11" fill="rgba(0,212,255,0.4)" letter-spacing="1.5">
+    <circle cx="492" cy="206" r="2" fill="#00ff88" opacity="0.6"/>
+    <text x="500" y="210">34 Signal Modes</text>
+    <circle cx="492" cy="228" r="2" fill="#00ff88" opacity="0.6"/>
+    <text x="500" y="232">Multi-SDR Support</text>
+    <circle cx="492" cy="250" r="2" fill="#00ff88" opacity="0.6"/>
+    <text x="500" y="254">Open Source</text>
+  </g>
+</svg>

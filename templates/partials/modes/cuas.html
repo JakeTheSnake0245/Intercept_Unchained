@@ -1,0 +1,111 @@
+<!-- C-UAS (Counter-UAS) MODE -->
+<div id="cuasMode" class="mode-content">
+
+    <!-- Configuration -->
+    <div class="section">
+        <h3>Counter-UAS Detection</h3>
+
+        <!-- Scan mode selector -->
+        <div class="form-group">
+            <label>Scan Mode</label>
+            <div class="cuas-scan-mode-group">
+                <button class="cuas-scan-mode-btn active" data-mode="passive" onclick="CUAS.setScanMode('passive')">Passive RF</button>
+                <button class="cuas-scan-mode-btn" data-mode="wifi_bt" onclick="CUAS.setScanMode('wifi_bt')">WiFi + BT</button>
+                <button class="cuas-scan-mode-btn" data-mode="full" onclick="CUAS.setScanMode('full')">Full Spectrum</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>SDR Device Index</label>
+            <input type="number" id="cuasDeviceIndex" value="0" min="0" max="10" style="width: 80px;">
+        </div>
+
+        <div class="form-group">
+            <label>Gain (dB)</label>
+            <input type="range" id="cuasGain" min="0" max="50" value="40" style="width: 100%;">
+            <span id="cuasGainVal" style="font-size: 10px; color: var(--text-dim);">40 dB</span>
+        </div>
+
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+            <button class="action-btn primary" onclick="CUAS.startAll()" id="cuasStartBtn">Start Scan</button>
+            <button class="action-btn" onclick="CUAS.stopAll()" id="cuasStopBtn">Stop</button>
+            <button class="action-btn" onclick="CUAS.clearDetections()">Clear Log</button>
+        </div>
+    </div>
+
+    <!-- Output panel -->
+    <div class="output-panel">
+
+        <!-- Threat level strip -->
+        <div class="cuas-threat-strip" id="cuasThreatStrip">
+            <div class="cuas-threat-level clear" id="cuasThreatLevel">
+                <div class="cuas-threat-dot"></div>
+                <span id="cuasThreatLabel">CLEAR</span>
+            </div>
+            <div class="cuas-threat-meta">
+                <span id="cuasDetCount">0</span> detections &bull;
+                <span id="cuasActiveSubtools">0</span> sensors active
+            </div>
+        </div>
+
+        <!-- Subtool tabs -->
+        <div class="cuas-tabs" id="cuasTabs">
+            <button class="cuas-tab active" data-panel="all" onclick="CUAS.switchTab('all')">All</button>
+            <button class="cuas-tab" data-panel="remote_id" onclick="CUAS.switchTab('remote_id')">Remote ID</button>
+            <button class="cuas-tab" data-panel="dji_droneid" onclick="CUAS.switchTab('dji_droneid')">DJI DroneID</button>
+            <button class="cuas-tab" data-panel="spectrum" onclick="CUAS.switchTab('spectrum')">RF Spectrum</button>
+            <button class="cuas-tab" data-panel="wifi_fingerprint" onclick="CUAS.switchTab('wifi_fingerprint')">WiFi FP</button>
+            <button class="cuas-tab" data-panel="bt_fingerprint" onclick="CUAS.switchTab('bt_fingerprint')">BT FP</button>
+            <button class="cuas-tab" data-panel="fpv_detector" onclick="CUAS.switchTab('fpv_detector')">FPV 5.8G</button>
+            <button class="cuas-tab" data-panel="gps_anomaly" onclick="CUAS.switchTab('gps_anomaly')">GPS Monitor</button>
+        </div>
+
+        <!-- Detection table (shared across all tabs) -->
+        <div id="cuasDetectionTableWrap">
+            <div class="cuas-controls">
+                <span style="font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);" id="cuasTabLabel">ALL DETECTIONS</span>
+                <button class="cuas-btn" onclick="CUAS.exportDetections('json')" style="margin-left: auto;">Export JSON</button>
+                <button class="cuas-btn" onclick="CUAS.exportDetections('csv')">Export CSV</button>
+            </div>
+            <table class="cuas-detections-table" id="cuasDetTable">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Sensor</th>
+                        <th>Freq/ID</th>
+                        <th>RSSI</th>
+                        <th>Make/Model</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody id="cuasDetBody">
+                    <tr>
+                        <td colspan="7" class="cuas-empty">No detections yet. Start a scan to begin.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Subtool status pills -->
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+            <div style="font-size: 10px; color: var(--text-dim); font-family: var(--font-mono); margin-bottom: 6px; letter-spacing: 0.5px;">SENSOR STATUS</div>
+            <div id="cuasSubtoolStatus" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <span class="cuas-subtool-status stopped" data-subtool="remote_id">Remote ID</span>
+                <span class="cuas-subtool-status stopped" data-subtool="dji_droneid">DJI ID</span>
+                <span class="cuas-subtool-status stopped" data-subtool="spectrum">RF Spectrum</span>
+                <span class="cuas-subtool-status stopped" data-subtool="wifi_fingerprint">WiFi FP</span>
+                <span class="cuas-subtool-status stopped" data-subtool="bt_fingerprint">BT FP</span>
+                <span class="cuas-subtool-status stopped" data-subtool="fpv_detector">FPV 5.8G</span>
+                <span class="cuas-subtool-status stopped" data-subtool="gps_anomaly">GPS Mon</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.getElementById('cuasGain').addEventListener('input', function() {
+    document.getElementById('cuasGainVal').textContent = this.value + ' dB';
+});
+</script>

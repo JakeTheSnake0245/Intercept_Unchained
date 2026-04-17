@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.deps/
+ENV/
+uv.lock
+
+# Logs
+*.log
+pager_messages.log
+
+# Local data
+downloads/
+pgdata/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Package manager lock files & DB files
+uv.lock
+*.db
+*.sqlite3
+intercept.db
+
+# Instance folder (contains database with user data)
+instance/
+
+# Agent configs with real credentials (keep template only)
+intercept_agent_*.cfg
+!intercept_agent.cfg
+
+# Temporary files
+/tmp/
+*.tmp
+
+# Weather satellite runtime data (decoded images, samples, SatDump output)
+data/weather_sat/
+
+# Radiosonde runtime data (station config, logs)
+data/radiosonde/
+
+# SDR capture files (large IQ recordings)
+data/subghz/captures/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Local utility scripts
+reset-sdr.*
+.superpowers/
+docs/superpowers/
+
+# Pytest temp dirs
+pytest-cache-files-*/
+
+# Claude memory/project files
+.claude/

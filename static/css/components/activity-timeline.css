@@ -1,0 +1,686 @@
+/**
+ * Activity Timeline Component
+ * Reusable, configuration-driven timeline visualization
+ * Supports visual modes: compact, enriched, summary
+ */
+
+/* ============================================
+   CSS VARIABLES (with fallbacks)
+   ============================================ */
+.activity-timeline {
+    --timeline-bg: var(--bg-card, #1a1a1a);
+    --timeline-border: var(--border-color, #333);
+    --timeline-bg-secondary: var(--bg-secondary, #252525);
+    --timeline-bg-elevated: var(--bg-elevated, #2a2a2a);
+    --timeline-text-primary: var(--text-primary, #fff);
+    --timeline-text-secondary: var(--text-secondary, #888);
+    --timeline-text-dim: var(--text-dim, #666);
+    --timeline-accent: var(--accent-cyan, #4a9eff);
+    --timeline-status-new: var(--signal-new, #3b82f6);
+    --timeline-status-baseline: var(--signal-baseline, #6b7280);
+    --timeline-status-burst: var(--signal-burst, #f59e0b);
+    --timeline-status-flagged: var(--signal-emergency, #ef4444);
+    --timeline-status-gone: var(--text-dim, #666);
+}
+
+/* ============================================
+   TIMELINE CONTAINER
+   ============================================ */
+.activity-timeline {
+    background: var(--timeline-bg);
+    border: 1px solid var(--timeline-border);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.activity-timeline.collapsed .activity-timeline-body {
+    display: none;
+}
+
+.activity-timeline.collapsed .activity-timeline-header {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 10px;
+}
+
+.activity-timeline.collapsed .activity-timeline-collapse-icon {
+    transform: rotate(-90deg);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.activity-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.activity-timeline-header:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.activity-timeline-collapse-icon {
+    margin-right: 8px;
+    font-size: 10px;
+    color: var(--timeline-text-dim);
+}
+
+.activity-timeline-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--timeline-text-secondary);
+}
+
+.activity-timeline-header-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--timeline-text-dim);
+}
+
+.activity-timeline-header-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.activity-timeline-header-stat .stat-value {
+    color: var(--timeline-text-primary);
+    font-weight: 500;
+}
+
+/* ============================================
+   BODY
+   ============================================ */
+.activity-timeline-body {
+    padding: 0 12px 12px 12px;
+    border-top: 1px solid var(--timeline-border);
+}
+
+/* ============================================
+   CONTROLS
+   ============================================ */
+.activity-timeline-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 0;
+    flex-wrap: wrap;
+}
+
+.activity-timeline-btn {
+    background: var(--timeline-bg-secondary);
+    border: 1px solid var(--timeline-border);
+    color: var(--timeline-text-secondary);
+    font-size: 9px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.activity-timeline-btn:hover {
+    background: var(--timeline-bg-elevated);
+    color: var(--timeline-text-primary);
+}
+
+.activity-timeline-btn.active {
+    background: var(--timeline-accent);
+    color: var(--text-inverse);
+    border-color: var(--timeline-accent);
+}
+
+.activity-timeline-window {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    color: var(--timeline-text-dim);
+    margin-left: auto;
+}
+
+.activity-timeline-window-select {
+    background: var(--timeline-bg-secondary);
+    border: 1px solid var(--timeline-border);
+    color: var(--timeline-text-primary);
+    font-size: 9px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-family: inherit;
+}
+
+/* ============================================
+   TIME AXIS
+   ============================================ */
+.activity-timeline-axis {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 50px 0 140px;
+    margin-bottom: 6px;
+    font-size: 9px;
+    color: var(--timeline-text-dim);
+}
+
+.activity-timeline-axis-label {
+    position: relative;
+}
+
+.activity-timeline-axis-label::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 1px;
+    height: 4px;
+    background: var(--timeline-border);
+}
+
+/* ============================================
+   LANES CONTAINER
+   ============================================ */
+.activity-timeline-lanes {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 180px;
+    overflow-y: auto;
+    margin-top: 6px;
+}
+
+.activity-timeline-lanes::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-timeline-lanes::-webkit-scrollbar-track {
+    background: var(--timeline-bg-secondary);
+    border-radius: 3px;
+}
+
+.activity-timeline-lanes::-webkit-scrollbar-thumb {
+    background: var(--timeline-border);
+    border-radius: 3px;
+}
+
+.activity-timeline-lanes::-webkit-scrollbar-thumb:hover {
+    background: var(--timeline-text-dim);
+}
+
+/* ============================================
+   INDIVIDUAL LANE
+   ============================================ */
+.activity-timeline-lane {
+    display: flex;
+    align-items: stretch;
+    min-height: 32px;
+    background: var(--timeline-bg-secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.activity-timeline-lane:hover {
+    background: var(--timeline-bg-elevated);
+}
+
+.activity-timeline-lane.expanded {
+    min-height: auto;
+}
+
+.activity-timeline-lane.baseline {
+    opacity: 0.5;
+}
+
+.activity-timeline-lane.baseline:hover {
+    opacity: 0.8;
+}
+
+/* Status indicator strip */
+.activity-timeline-status {
+    width: 4px;
+    min-width: 4px;
+    flex-shrink: 0;
+}
+
+.activity-timeline-status[data-status="new"] {
+    background: var(--timeline-status-new);
+}
+
+.activity-timeline-status[data-status="baseline"] {
+    background: var(--timeline-status-baseline);
+}
+
+.activity-timeline-status[data-status="burst"] {
+    background: var(--timeline-status-burst);
+}
+
+.activity-timeline-status[data-status="flagged"] {
+    background: var(--timeline-status-flagged);
+}
+
+.activity-timeline-status[data-status="gone"] {
+    background: var(--timeline-status-gone);
+}
+
+/* Label section */
+.activity-timeline-label {
+    width: 130px;
+    min-width: 130px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    border-right: 1px solid var(--timeline-border);
+    overflow: hidden;
+}
+
+.activity-timeline-id {
+    color: var(--timeline-text-primary);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+.activity-timeline-name {
+    color: var(--timeline-text-dim);
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* ============================================
+   TRACK (where bars are drawn)
+   ============================================ */
+.activity-timeline-track {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    min-height: 32px;
+    padding: 4px 8px;
+}
+
+.activity-timeline-track-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================
+   SIGNAL BARS
+   ============================================ */
+.activity-timeline-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 14px;
+    min-width: 2px;
+    border-radius: 2px;
+}
+
+/* Strength variants */
+.activity-timeline-bar[data-strength="1"] { height: 5px; }
+.activity-timeline-bar[data-strength="2"] { height: 9px; }
+.activity-timeline-bar[data-strength="3"] { height: 13px; }
+.activity-timeline-bar[data-strength="4"] { height: 17px; }
+.activity-timeline-bar[data-strength="5"] { height: 21px; }
+
+/* Status colors */
+.activity-timeline-bar[data-status="new"],
+.activity-timeline-bar[data-status="repeated"] {
+    background: var(--timeline-status-new);
+    box-shadow: 0 0 4px rgba(59, 130, 246, 0.3);
+}
+
+.activity-timeline-bar[data-status="baseline"] {
+    background: var(--timeline-status-baseline);
+}
+
+.activity-timeline-bar[data-status="burst"] {
+    background: var(--timeline-status-burst);
+    box-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
+}
+
+.activity-timeline-bar[data-status="flagged"] {
+    background: var(--timeline-status-flagged);
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+.activity-timeline-lane:hover .activity-timeline-bar {
+    opacity: 0.9;
+}
+
+/* ============================================
+   EXPANDED VIEW (tick marks)
+   ============================================ */
+.activity-timeline-ticks {
+    display: none;
+    position: relative;
+    height: 24px;
+    margin-top: 4px;
+    border-top: 1px solid var(--timeline-border);
+    padding-top: 4px;
+}
+
+.activity-timeline-lane.expanded .activity-timeline-ticks {
+    display: block;
+}
+
+.activity-timeline-tick {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    background: var(--timeline-accent);
+}
+
+.activity-timeline-tick[data-strength="1"] { height: 4px; }
+.activity-timeline-tick[data-strength="2"] { height: 8px; }
+.activity-timeline-tick[data-strength="3"] { height: 12px; }
+.activity-timeline-tick[data-strength="4"] { height: 16px; }
+.activity-timeline-tick[data-strength="5"] { height: 20px; }
+
+/* ============================================
+   STATS COLUMN
+   ============================================ */
+.activity-timeline-stats {
+    width: 45px;
+    min-width: 45px;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    font-size: 9px;
+    color: var(--timeline-text-dim);
+    border-left: 1px solid var(--timeline-border);
+}
+
+.activity-timeline-stat-count {
+    color: var(--timeline-text-primary);
+    font-weight: 500;
+}
+
+.activity-timeline-stat-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ============================================
+   ANNOTATIONS
+   ============================================ */
+.activity-timeline-annotations {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--timeline-border);
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.activity-timeline-annotation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--timeline-text-secondary);
+    background: var(--timeline-bg-secondary);
+    border-radius: 3px;
+    margin-bottom: 4px;
+}
+
+.activity-timeline-annotation-icon {
+    font-size: 10px;
+    width: 14px;
+    text-align: center;
+}
+
+.activity-timeline-annotation[data-type="new"] {
+    border-left: 2px solid var(--timeline-status-new);
+}
+
+.activity-timeline-annotation[data-type="burst"] {
+    border-left: 2px solid var(--timeline-status-burst);
+}
+
+.activity-timeline-annotation[data-type="pattern"] {
+    border-left: 2px solid var(--timeline-accent);
+}
+
+.activity-timeline-annotation[data-type="flagged"] {
+    border-left: 2px solid var(--timeline-status-flagged);
+    color: var(--timeline-status-flagged);
+}
+
+.activity-timeline-annotation[data-type="gone"] {
+    border-left: 2px solid var(--timeline-status-gone);
+}
+
+/* ============================================
+   TOOLTIP
+   ============================================ */
+.activity-timeline-tooltip {
+    position: fixed;
+    z-index: 10000;
+    background: var(--timeline-bg-elevated);
+    border: 1px solid var(--timeline-border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 10px;
+    color: var(--timeline-text-primary);
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 240px;
+    font-family: var(--font-mono);
+}
+
+.activity-timeline-tooltip-header {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--timeline-accent);
+}
+
+.activity-timeline-tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--timeline-text-secondary);
+    line-height: 1.5;
+}
+
+.activity-timeline-tooltip-row span:last-child {
+    color: var(--timeline-text-primary);
+}
+
+/* ============================================
+   LEGEND
+   ============================================ */
+.activity-timeline-legend {
+    display: flex;
+    gap: 12px;
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--timeline-border);
+    font-size: 9px;
+    color: var(--timeline-text-dim);
+}
+
+.activity-timeline-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.activity-timeline-legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+}
+
+.activity-timeline-legend-dot.new { background: var(--timeline-status-new); }
+.activity-timeline-legend-dot.baseline { background: var(--timeline-status-baseline); }
+.activity-timeline-legend-dot.burst { background: var(--timeline-status-burst); }
+.activity-timeline-legend-dot.flagged { background: var(--timeline-status-flagged); }
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.activity-timeline-empty {
+    text-align: center;
+    padding: 24px 16px;
+    color: var(--timeline-text-dim);
+    font-size: 11px;
+}
+
+.activity-timeline-empty-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+    opacity: 0.4;
+}
+
+/* More indicator */
+.activity-timeline-more {
+    text-align: center;
+    padding: 8px;
+    font-size: 10px;
+    color: var(--timeline-text-dim);
+}
+
+/* ============================================
+   VISUAL MODE: COMPACT
+   ============================================ */
+.activity-timeline--compact .activity-timeline-lanes {
+    max-height: 140px;
+}
+
+.activity-timeline--compact .activity-timeline-lane {
+    min-height: 26px;
+}
+
+.activity-timeline--compact .activity-timeline-label {
+    width: 100px;
+    min-width: 100px;
+    padding: 4px 6px;
+}
+
+.activity-timeline--compact .activity-timeline-id {
+    display: none;
+}
+
+.activity-timeline--compact .activity-timeline-name {
+    font-size: 10px;
+    color: var(--timeline-text-secondary);
+}
+
+.activity-timeline--compact .activity-timeline-track {
+    min-height: 26px;
+}
+
+.activity-timeline--compact .activity-timeline-bar {
+    height: 10px !important;
+}
+
+.activity-timeline--compact .activity-timeline-bar[data-strength="1"] { height: 4px !important; }
+.activity-timeline--compact .activity-timeline-bar[data-strength="2"] { height: 6px !important; }
+.activity-timeline--compact .activity-timeline-bar[data-strength="3"] { height: 8px !important; }
+.activity-timeline--compact .activity-timeline-bar[data-strength="4"] { height: 10px !important; }
+.activity-timeline--compact .activity-timeline-bar[data-strength="5"] { height: 12px !important; }
+
+.activity-timeline--compact .activity-timeline-stats {
+    width: 30px;
+    min-width: 30px;
+}
+
+.activity-timeline--compact .activity-timeline-stat-label {
+    display: none;
+}
+
+.activity-timeline--compact .activity-timeline-legend {
+    display: none;
+}
+
+.activity-timeline--compact .activity-timeline-axis {
+    padding-left: 110px;
+    padding-right: 40px;
+}
+
+/* ============================================
+   VISUAL MODE: SUMMARY
+   ============================================ */
+.activity-timeline--summary .activity-timeline-lanes {
+    max-height: 100px;
+}
+
+.activity-timeline--summary .activity-timeline-lane {
+    min-height: 20px;
+}
+
+.activity-timeline--summary .activity-timeline-label {
+    width: 80px;
+    min-width: 80px;
+    padding: 3px 6px;
+}
+
+.activity-timeline--summary .activity-timeline-id,
+.activity-timeline--summary .activity-timeline-name {
+    font-size: 9px;
+}
+
+.activity-timeline--summary .activity-timeline-status {
+    width: 3px;
+    min-width: 3px;
+}
+
+.activity-timeline--summary .activity-timeline-track {
+    min-height: 20px;
+}
+
+.activity-timeline--summary .activity-timeline-bar {
+    height: 8px !important;
+    border-radius: 1px;
+}
+
+.activity-timeline--summary .activity-timeline-stats {
+    display: none;
+}
+
+.activity-timeline--summary .activity-timeline-ticks {
+    display: none !important;
+}
+
+.activity-timeline--summary .activity-timeline-annotations {
+    display: none;
+}
+
+.activity-timeline--summary .activity-timeline-legend {
+    display: none;
+}
+
+.activity-timeline--summary .activity-timeline-axis {
+    padding-left: 90px;
+    padding-right: 10px;
+    font-size: 8px;
+}
+
+/* ============================================
+   BACKWARD COMPATIBILITY NOTE
+   The old signal-timeline.css is still loaded
+   for existing TSCM code that uses those classes.
+   New code should use activity-timeline classes.
+   ============================================ */

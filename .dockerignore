@@ -1,0 +1,62 @@
+# Git & CI
+.git
+.gitignore
+.github
+.claude
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+.eggs/
+*.egg-info/
+*.egg
+.uv
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test/Dev
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache
+.DS_Store
+tasks/
+
+# Documentation
+*.md
+
+# Runtime data (mounted as volume)
+instance/
+
+# data/ is a Python package — only exclude non-code files
+data/*.json
+data/*.csv
+data/*.db
+
+# Build scripts
+build-multiarch.sh
+
+# Logs
+*.log
+
+# Local Postgres data
+pgdata/
+pgdata.bak/
+
+# Captured files (don't include in image)
+*.cap
+*.pcap
+*.csv
