@@ -116,7 +116,6 @@ def _collect_process_status() -> dict[str, bool]:
             'ais': _alive('ais_process'),
             'acars': _alive('acars_process'),
             'vdl2': _alive('vdl2_process'),
-            'aprs': _alive('aprs_process'),
             'dsc': _alive('dsc_process'),
             'morse': _alive('morse_process'),
         }

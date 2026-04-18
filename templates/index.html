@@ -12691,6 +12691,8 @@
             URL.revokeObjectURL(url);
         }
     </scr` + `ipt>
+
+
 </body>
 </html>
             `;
@@ -16471,6 +16473,104 @@
         setTimeout(consumePendingWeatherSatHandoff, 250);
     });
     </script>
+    <!-- FRONTEND MODE PRUNE START -->
+    <script>
+    (function () {
+      const REMOVED_MODES = new Set([
+        'aprs',
+        'sstv',
+        'weathersat',
+        'sstv_general',
+        'spaceweather',
+        'spystations',
+        'websdr',
+        'wefax',
+        'morse',
+        'ook'
+      ]);
+
+      const REMOVED_LABELS = new Set([
+        'APRS',
+        'ISS SSTV',
+        'Weather Sat',
+        'HF SSTV',
+        'Space Wx',
+        'Space Weather',
+        'Spy Stations',
+        'WebSDR',
+        'WEFAX',
+        'Morse',
+        'OOK Decoder',
+        "WHAT'S NEW",
+        "What's New"
+      ]);
+
+      function norm(s) {
+        return String(s || '').replace(/\s+/g, ' ').trim();
+      }
+
+      function modeSelectors(mode) {
+        return [
+          `[data-mode="${mode}"]`,
+          `[onclick*="selectMode('${mode}')"]`,
+          `[onclick*='selectMode("${mode}")']`,
+          `[onclick*="switchMode('${mode}')"]`,
+          `[onclick*='switchMode("${mode}")']`,
+          `[href*="${mode}"]`
+        ];
+      }
+
+      function removeElement(el) {
+        if (!el) return;
+        const target = el.closest(
+          '.welcome-changelog, .mode-card, button, a, .nav-item, .nav-link, .dropdown-item, .mobile-nav-item, .chip, .mode-chip, .status-chip, .status-pill, .run-state-chip, .card, .panel, li, .quick-action, .menu-item, .tile'
+        ) || el;
+        if (target && target.parentNode) target.parentNode.removeChild(target);
+      }
+
+      function pruneRemovedModes() {
+        document.querySelectorAll('.welcome-changelog').forEach(removeElement);
+
+        REMOVED_MODES.forEach((mode) => {
+          modeSelectors(mode).forEach((sel) => {
+            document.querySelectorAll(sel).forEach(removeElement);
+          });
+        });
+
+        document.querySelectorAll('button, a, div, span, h2, h3, h4, li').forEach((el) => {
+          const t = norm(el.textContent);
+          if (!t) return;
+          if (REMOVED_LABELS.has(t)) removeElement(el);
+        });
+      }
+
+      function blockRemovedModeCalls(fnName) {
+        const original = window[fnName];
+        if (typeof original !== 'function') return;
+        window[fnName] = function(mode, ...args) {
+          if (REMOVED_MODES.has(mode)) return false;
+          return original.call(this, mode, ...args);
+        };
+      }
+
+      function install() {
+        pruneRemovedModes();
+        blockRemovedModeCalls('selectMode');
+        blockRemovedModeCalls('switchMode');
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install, { once: true });
+      } else {
+        install();
+      }
+
+      const mo = new MutationObserver(() => pruneRemovedModes());
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+    })();
+    </script>
+    <!-- FRONTEND MODE PRUNE END -->
+
 </body>
 
 </html>

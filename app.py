@@ -928,7 +928,6 @@ def health_check() -> Response:
                 "ais": ais_process is not None and (ais_process.poll() is None if ais_process else False),
                 "acars": acars_process is not None and (acars_process.poll() is None if acars_process else False),
                 "vdl2": vdl2_process is not None and (vdl2_process.poll() is None if vdl2_process else False),
-                "aprs": aprs_process is not None and (aprs_process.poll() is None if aprs_process else False),
                 "wifi": wifi_active,
                 "bluetooth": bt_active,
                 "dsc": dsc_process is not None and (dsc_process.poll() is None if dsc_process else False),
@@ -939,9 +938,7 @@ def health_check() -> Response:
                 "rtlamr": rtlamr_process is not None and (rtlamr_process.poll() is None if rtlamr_process else False),
                 "meshtastic": _get_singleton_running("utils.meshtastic", "get_meshtastic_client", "is_running"),
                 "sstv": _get_singleton_running("utils.sstv", "get_sstv_decoder", "is_running"),
-                "weathersat": _get_singleton_running("utils.weather_sat", "get_weather_sat_decoder", "is_running"),
                 "wefax": _get_singleton_running("utils.wefax", "get_wefax_decoder", "is_running"),
-                "sstv_general": _get_singleton_running("utils.sstv", "get_general_sstv_decoder", "is_running"),
                 "tscm": _get_tscm_active(),
                 "gps": _get_singleton_running("utils.gps", "get_gps_reader", "is_running"),
                 "bt_locate": _get_singleton_running("utils.bt_locate", "get_locate_session", "is_active"),
@@ -1183,12 +1180,7 @@ def _init_app() -> None:
         pass
 
     # Initialize KiwiSDR WebSocket audio proxy
-    try:
-        from routes.websdr import init_websdr_audio
-
-        init_websdr_audio(app)
-    except Exception:
-        pass
+    pass
 
     # Initialize WebSocket for waterfall streaming
     try:

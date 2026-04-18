@@ -76,3 +76,5 @@ pytest-cache-files-*/
 
 # Claude memory/project files
 .claude/
+.backup_*/
+.backup*/

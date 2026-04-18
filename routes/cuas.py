@@ -146,7 +146,7 @@ def stream_all():
             for name, tool in _subtools.items():
                 event = tool.get_event(timeout=0.05)
                 if event:
-                    yield format_sse(event, event_type=event.get("type", "event"))
+                    yield format_sse(event, event=event.get("type", "event"))
 
             # Periodic summary
             count = store.count()
@@ -156,9 +156,9 @@ def stream_all():
                     "type": "summary",
                     "detections_count": count,
                     "threat_level": store.get_highest_confidence(),
-                }, event_type="summary")
+                }, event="summary")
 
-            yield format_sse({"type": "keepalive", "ts": time.time()}, event_type="keepalive")
+            yield format_sse({"type": "keepalive", "ts": time.time()}, event="keepalive")
             time.sleep(1)
 
     return Response(generate(), mimetype="text/event-stream",
@@ -175,9 +175,9 @@ def stream_subtool(subtool_name: str):
         while True:
             event = tool.get_event(timeout=1.0)
             if event:
-                yield format_sse(event, event_type=event.get("type", "event"))
+                yield format_sse(event, event=event.get("type", "event"))
             else:
-                yield format_sse({"type": "keepalive", "ts": time.time()}, event_type="keepalive")
+                yield format_sse({"type": "keepalive", "ts": time.time()}, event="keepalive")
 
     return Response(generate(), mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
