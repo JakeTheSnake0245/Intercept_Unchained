@@ -9247,6 +9247,11 @@
 
         // Start handshake capture
         async function captureHandshake(bssid, channel) {
+            const isAgentMode = typeof currentAgent !== 'undefined' && currentAgent !== 'local';
+            if (isAgentMode) {
+                showError('Handshake capture is currently local-only. Switch to Local mode to use it.');
+                return;
+            }
             const confirmed = await AppFeedback.confirmAction({
                 title: 'Capture Handshake',
                 message: 'Start handshake capture for ' + bssid + '? This will stop the current scan.',
@@ -9495,9 +9500,16 @@
 
         // Send deauth
         async function sendDeauth() {
+            const isAgentMode = typeof currentAgent !== 'undefined' && currentAgent !== 'local';
+            if (isAgentMode) {
+                showError('Deauth is currently local-only. Switch to Local mode to use it.');
+                return;
+            }
+
             const bssid = document.getElementById('targetBssid').value;
             const client = document.getElementById('targetClient').value || 'FF:FF:FF:FF:FF:FF';
             const count = document.getElementById('deauthCount').value || '5';
+            const iface = monitorInterface || document.getElementById('wifiInterfaceSelect')?.value || '';
 
             if (!bssid) {
                 alert('Enter target BSSID');
@@ -9517,7 +9529,7 @@
             fetch('/wifi/deauth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bssid: bssid, client: client, count: parseInt(count) })
+                body: JSON.stringify({ bssid: bssid, client: client, count: parseInt(count), interface: iface })
             }).then(r => r.json())
                 .then(data => {
                     if (data.status === 'success') {

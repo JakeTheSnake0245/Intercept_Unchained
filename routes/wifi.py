@@ -60,6 +60,10 @@ def _add_deprecation_header(response):
 pmkid_process = None
 pmkid_lock = threading.Lock()
 
+# Handshake capture process state
+handshake_process = None
+handshake_lock = threading.Lock()
+
 
 def _parse_channel_list(raw_channels: Any) -> list[int] | None:
     """Parse a channel list from string/list input."""
@@ -751,7 +755,11 @@ def start_wifi_scan():
 
 @wifi_bp.route("/scan/stop", methods=["POST"])
 def stop_wifi_scan():
-    """Stop WiFi scanning."""
+    """Stop WiFi scanning and any active handshake capture."""
+    global handshake_process
+
+    stopped = False
+
     with app_module.wifi_lock:
         if app_module.wifi_process:
             app_module.wifi_process.terminate()
@@ -760,8 +768,19 @@ def stop_wifi_scan():
             except subprocess.TimeoutExpired:
                 app_module.wifi_process.kill()
             app_module.wifi_process = None
-            return jsonify({"status": "stopped"})
-        return jsonify({"status": "not_running"})
+            stopped = True
+
+    with handshake_lock:
+        if handshake_process:
+            handshake_process.terminate()
+            try:
+                handshake_process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                handshake_process.kill()
+            handshake_process = None
+            stopped = True
+
+    return jsonify({"status": "stopped" if stopped else "not_running"})
 
 
 @wifi_bp.route("/deauth", methods=["POST"])
@@ -826,6 +845,8 @@ def send_deauth():
 @wifi_bp.route("/handshake/capture", methods=["POST"])
 def capture_handshake():
     """Start targeted handshake capture."""
+    global handshake_process
+
     data = request.json
     target_bssid = data.get("bssid")
     channel = data.get("channel")
@@ -853,6 +874,10 @@ def capture_handshake():
         if app_module.wifi_process:
             return api_error("Scan already running.")
 
+    with handshake_lock:
+        if handshake_process and handshake_process.poll() is None:
+            return api_error("Handshake capture already running.")
+
         capture_path = f'/tmp/intercept_handshake_{target_bssid.replace(":", "")}'
 
         airodump_path = get_tool_path("airodump-ng")
@@ -870,7 +895,7 @@ def capture_handshake():
         ]
 
         try:
-            app_module.wifi_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            handshake_process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             app_module.wifi_queue.put({"type": "info", "text": f"Capturing handshakes for {target_bssid}"})
             return jsonify({"status": "started", "capture_file": capture_path + "-01.cap"})
         except Exception as e:
@@ -880,6 +905,8 @@ def capture_handshake():
 @wifi_bp.route("/handshake/status", methods=["POST"])
 def check_handshake_status():
     """Check if a handshake has been captured."""
+    global handshake_process
+
     data = request.json
     capture_file = data.get("file", "")
     target_bssid = data.get("bssid", "")
@@ -887,12 +914,15 @@ def check_handshake_status():
     if not capture_file.startswith("/tmp/intercept_handshake_") or ".." in capture_file:
         return api_error("Invalid capture file path")
 
+    running = False
+    with handshake_lock:
+        if handshake_process and handshake_process.poll() is None:
+            running = True
+        elif handshake_process and handshake_process.poll() is not None:
+            handshake_process = None
+
     if not os.path.exists(capture_file):
-        with app_module.wifi_lock:
-            if app_module.wifi_process and app_module.wifi_process.poll() is None:
-                return jsonify({"status": "running", "file_exists": False, "handshake_found": False})
-            else:
-                return jsonify({"status": "stopped", "file_exists": False, "handshake_found": False})
+        return jsonify({"status": "running" if running else "stopped", "file_exists": False, "handshake_found": False})
 
     file_size = os.path.getsize(capture_file)
     handshake_found = False
@@ -936,7 +966,7 @@ def check_handshake_status():
 
     return jsonify(
         {
-            "status": "running" if app_module.wifi_process and app_module.wifi_process.poll() is None else "stopped",
+            "status": "running" if running else "stopped",
             "file_exists": True,
             "file_size": file_size,
             "file": capture_file,
