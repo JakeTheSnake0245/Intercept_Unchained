@@ -87,6 +87,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     {% endif %}
     <script defer src="{{ url_for('static', filename='vendor/chartjs/chartjs-adapter-date-fns.bundle.min.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/modes/subghz.js') }}?v={{ version }}&r=subghz_layout9"></script>
+    <script defer src="{{ url_for('static', filename='js/modes/waterfall.js') }}?v={{ version }}&r=wfdeck21"></script>
     <script>
         window.INTERCEPT_MODE_STYLE_MAP = {
             aprs: "{{ url_for('static', filename='css/modes/aprs.css') }}",
@@ -4470,6 +4472,9 @@
             const previousMode = currentMode;
             if (mode === 'listening') mode = 'waterfall';
             if (!validModes.has(mode)) mode = 'pager';
+            try {
+                fetch(`/status?mode_debug=${encodeURIComponent(mode)}&ts=${Date.now()}`, { cache: 'no-store' }).catch(() => {});
+            } catch (_) {}
             const styleReadyPromise = (typeof window.ensureModeStyles === 'function')
                 ? Promise.resolve(window.ensureModeStyles(mode)).catch((err) => {
                     console.warn(`[ModeSwitch] style load failed for ${mode}: ${err?.message || err}`);
@@ -4823,7 +4828,11 @@
             } else if (mode === 'websdr') {
                 if (typeof initWebSDR === 'function') initWebSDR();
             } else if (mode === 'subghz') {
-                SubGhz.init();
+                if (typeof SubGhz !== 'undefined' && typeof SubGhz.init === 'function') {
+                    SubGhz.init();
+                } else {
+                    console.error('[ModeSwitch] SubGhz script not ready');
+                }
             } else if (mode === 'bt_locate') {
                 BtLocate.init();
                 setTimeout(() => {
@@ -4839,7 +4848,11 @@
             } else if (mode === 'spaceweather') {
                 SpaceWeather.init();
             } else if (mode === 'waterfall') {
-                if (typeof Waterfall !== 'undefined') Waterfall.init();
+                if (typeof Waterfall !== 'undefined' && typeof Waterfall.init === 'function') {
+                    Waterfall.init();
+                } else {
+                    console.error('[ModeSwitch] Waterfall script not ready');
+                }
             } else if (mode === 'morse') {
                 MorseMode.init();
             } else if (mode === 'meteor') {
